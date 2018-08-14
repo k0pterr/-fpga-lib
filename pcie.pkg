@@ -276,6 +276,9 @@ typedef enum logic [1:0]
 }
 pl_sel_lnk_width_t;
 //----------------------------------------------------------
+//
+//    PCIe Link Control Register
+//
 typedef enum logic [3:0]
 {
     LINK_SR_LINK_SPEED_2_5 = 4'b0001,
@@ -286,23 +289,7 @@ link_sr_current_link_speed_t;
 function automatic string link_speed_name(input link_sr_current_link_speed_t value);
     return value.name;
 endfunction
-//----------------------------------------------------------
-typedef enum logic [5:0]
-{
-    LINK_SR_LINK_WIDTH_x1  = 6'b00_0001,
-    LINK_SR_LINK_WIDTH_x2  = 6'b00_0010,
-    LINK_SR_LINK_WIDTH_x4  = 6'b00_0100,
-    LINK_SR_LINK_WIDTH_x8  = 6'b00_1000,
-    LINK_SR_LINK_WIDTH_x12 = 6'b00_1100,
-    LINK_SR_LINK_WIDTH_x16 = 6'b01_0000,
-    LINK_SR_LINK_WIDTH_x32 = 6'b10_0000
-}
-link_sr_negotiated_link_width_t;
-
-function automatic string link_width_name(input link_sr_negotiated_link_width_t value);
-    return value.name;
-endfunction
-//----------------------------------------------------------
+//--------------------------------------
 typedef struct packed
 {
     logic [3:0] RESERVED_15_12;
@@ -320,6 +307,25 @@ typedef struct packed
 }
 pcie_link_control_reg_t;
 //----------------------------------------------------------
+//
+//    PCIe Link Status  Register
+//
+typedef enum logic [5:0]
+{
+    LINK_SR_LINK_WIDTH_x1  = 6'b00_0001,
+    LINK_SR_LINK_WIDTH_x2  = 6'b00_0010,
+    LINK_SR_LINK_WIDTH_x4  = 6'b00_0100,
+    LINK_SR_LINK_WIDTH_x8  = 6'b00_1000,
+    LINK_SR_LINK_WIDTH_x12 = 6'b00_1100,
+    LINK_SR_LINK_WIDTH_x16 = 6'b01_0000,
+    LINK_SR_LINK_WIDTH_x32 = 6'b10_0000
+}
+link_sr_negotiated_link_width_t;
+
+function automatic string link_width_name(input link_sr_negotiated_link_width_t value);
+    return value.name;
+endfunction
+//--------------------------------------
 typedef struct packed
 {
     logic                           link_autonomous_bandwidth_status;
@@ -333,6 +339,41 @@ typedef struct packed
 }
 pcie_link_status_reg_t;
 //----------------------------------------------------------
+//
+//    PCIe Device Capabilities Register
+//
+typedef enum logic [2:0]
+{
+    DEVCAP_MPS_128  = 3'b000,
+    DEVCAP_MPS_256  = 3'b001,
+    DEVCAP_MPS_512  = 3'b010,
+    DEVCAP_MPS_1014 = 3'b011,
+    DEVCAP_MPS_2048 = 3'b100,
+    DEVCAP_MPS_4096 = 3'b101
+}
+pcie_max_payload_size_t;
+
+function automatic string pcie_mps_name(input pcie_max_payload_size_t value);
+    return value.name;
+endfunction
+//--------------------------------------
+typedef struct packed
+{
+    logic [2:0]              RESERVED_31_29;
+    logic                    function_level_reset_cap;
+    logic [1:0]              captured_slot_power_limit_scale;
+    logic [7:0]              captured_slot_power_limit_value;
+    logic [1:0]              RESERVED_17_16;
+    logic                    role_based_error_reporting;
+    logic [2:0]              undefined;
+    logic [2:0]              endpoint_L1_acceptable_latency;
+    logic [2:0]              endpoint_L0s_acceptable_latency;
+    logic                    extended_tag_field_supported;
+    logic [1:0]              phantom_functions_supproted;
+    pcie_max_payload_size_t  MPS;
+}
+pcie_device_capabilities_reg_t;
+//----------------------------------------------------------
 
 //------------------------------------------------------------------------------
 function automatic dword_t reverse_bytes(input dword_t data);
@@ -340,12 +381,12 @@ function automatic dword_t reverse_bytes(input dword_t data);
     return { data[7:0], data[15:8], data[23:16], data[31:24] };
     
 endfunction
-
-
 //------------------------------------------------------------------------------
+
 endpackage // pcie_defs
 
 import pcie_defs::*;
 
 `endif // PCIE_DEFS_H
+//------------------------------------------------------------------------------
 
