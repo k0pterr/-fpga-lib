@@ -15,27 +15,31 @@
 
 package pcie_defs;
 
+localparam DWORD_W = 32;
+    
+typedef logic[DWORD_W-1:0] dword_t; 
+    
 //------------------------------------------------------------------------------
 typedef enum logic [2:0]    // Device Capabilities register (0x64)
-{    
-    MPS_128  = 3'b000, 
-    MPS_256  = 3'b001, 
-    MPS_512  = 3'b010, 
-    MPS_1024 = 3'b011,  
-    MPS_2048 = 3'b100,  
-    MPS_4096 = 3'b101 
+{
+    MPS_128  = 3'b000,
+    MPS_256  = 3'b001,
+    MPS_512  = 3'b010,
+    MPS_1024 = 3'b011,
+    MPS_2048 = 3'b100,
+    MPS_4096 = 3'b101
 }
 mps_t;
 
-typedef enum logic [3:0]    // Link Status register (0x74) [3:0] 
-{    
+typedef enum logic [3:0]    // Link Status register (0x74) [3:0]
+{
     LINK_SPEED_2_5 = 4'b0001,
     LINK_SPEED_5_0 = 4'b0010
 }
 link_speed_t;
 
-typedef enum logic [5:0]    // Link Status register (0x74) [9:4] 
-{    
+typedef enum logic [5:0]    // Link Status register (0x74) [9:4]
+{
     LINK_WIDTH_x1  = 6'b00_0001,
     LINK_WIDTH_x2  = 6'b00_0010,
     LINK_WIDTH_x4  = 6'b00_0100,
@@ -100,7 +104,7 @@ link_width_t;
 //  End-to-End TLP Prefix                | 100 = TLP Prefix   | 1E3E2E1E0
 //  -------------------------------------------------------------------------
 
-//----------------------------------------------------------    
+//----------------------------------------------------------
 typedef enum logic [2:0]
 {
     RD_3DW_HDR = 3'b000,
@@ -110,7 +114,7 @@ typedef enum logic [2:0]
     TLP_PREFIX = 3'b100
 }
 tlp_header_fmt_t;
-//----------------------------------------------------------    
+//----------------------------------------------------------
 typedef enum logic [4:0]
 {
     MEM_RQ      = 5'b0_0000,
@@ -129,7 +133,7 @@ typedef enum logic [4:0]
     MSG_G2RC    = 5'b1_0101
 }
 tlp_header_type_t;
-//----------------------------------------------------------    
+//----------------------------------------------------------
 typedef struct packed
 {
     logic [ 2:0] Fmt;
@@ -148,7 +152,7 @@ typedef struct packed
     logic [ 9:0] Length;
 }
 tlp_header0_t;
-//----------------------------------------------------------    
+//----------------------------------------------------------
 typedef struct packed
 {
     logic [15:0] RqID;
@@ -158,7 +162,7 @@ typedef struct packed
 
 }
 tlp_header1_t;
-//----------------------------------------------------------    
+//----------------------------------------------------------
 typedef struct packed
 {
     logic [15:0] CplID;
@@ -167,7 +171,7 @@ typedef struct packed
     logic [11:0] ByteCount;
 }
 tlp_header1_cpl_t;
-//----------------------------------------------------------    
+//----------------------------------------------------------
 typedef struct packed
 {
     logic [15:0] RqID;
@@ -175,7 +179,7 @@ typedef struct packed
     logic [ 7:0] MessageCode;
 }
 tlp_header1_msg_t;
-//----------------------------------------------------------    
+//----------------------------------------------------------
 typedef struct packed
 {
     logic [ 7:0] BusNumber;
@@ -187,7 +191,7 @@ typedef struct packed
     logic [ 1:0] RESERVED_3_10;
 }
 tlp_header2_cfg_t;
-//----------------------------------------------------------    
+//----------------------------------------------------------
 typedef struct packed
 {
     logic [15:0] RqID;
@@ -196,71 +200,71 @@ typedef struct packed
     logic [ 6:0] LowerAddress;
 }
 tlp_header2_cpl_t;
-//----------------------------------------------------------    
-typedef enum logic [5:0] 
+//----------------------------------------------------------
+typedef enum logic [5:0]
 {
-    ltssmDETECT_QUIET0                               = 6'h00, 
-    ltssmDETECT_QUIET1                               = 6'h01, 
-    ltssmDETECT_ACTIVE0                              = 6'h02, 
-    ltssmDETECT_ACTIVE1                              = 6'h03, 
-    ltssmPOLLING_ACTIVE                              = 6'h04, 
-    ltssmPOLLING_CONFIGURATION                       = 6'h05, 
-    ltssmPOLLING_COMPLIANCE_PRE_SEND_EIOS            = 6'h06, 
-    ltssmPOLLING_COMPLIANCE_PRE_TIMEOUT              = 6'h07, 
-    ltssmPOLLING_COMPLIANCE_SEND_PATTERN             = 6'h08, 
-    ltssmPOLLING_COMPLIANCE_POST_SEND_EIOS           = 6'h09, 
-    ltssmPOLLING_COMPLIANCE_POST_TIMEOUT             = 6'h0A, 
-    ltssmCONFIGURATION_LINKWIDTH_STATE_0             = 6'h0B, 
-    ltssmCONFIGURATION_LINKWIDTH_STATE_1             = 6'h0C, 
-    ltssmCONFIGURATION_LINKWIDTH_ACCEPT_0            = 6'h0D, 
-    ltssmCONFIGURATION_LINKWIDTH_ACCEPT_1            = 6'h0E, 
-    ltssmCONFIGURATION_LANENUM_WAIT                  = 6'h0F, 
-    ltssmCONFIGURATION_LANENUM_ACCEPT                = 6'h10, 
-    ltssmCONFIGURATION_COMPLETE_X1                   = 6'h11, 
-    ltssmCONFIGURATION_COMPLETE_X2                   = 6'h12, 
-    ltssmCONFIGURATION_COMPLETE_X4                   = 6'h13, 
-    ltssmCONFIGURATION_COMPLETE_X8                   = 6'h14, 
-    ltssmCONFIGURATION_IDLE                          = 6'h15, 
-    ltssmL0                                          = 6'h16, 
-    ltssmL1_ENTRY0                                   = 6'h17, 
-    ltssmL1_ENTRY1                                   = 6'h18, 
+    ltssmDETECT_QUIET0                               = 6'h00,
+    ltssmDETECT_QUIET1                               = 6'h01,
+    ltssmDETECT_ACTIVE0                              = 6'h02,
+    ltssmDETECT_ACTIVE1                              = 6'h03,
+    ltssmPOLLING_ACTIVE                              = 6'h04,
+    ltssmPOLLING_CONFIGURATION                       = 6'h05,
+    ltssmPOLLING_COMPLIANCE_PRE_SEND_EIOS            = 6'h06,
+    ltssmPOLLING_COMPLIANCE_PRE_TIMEOUT              = 6'h07,
+    ltssmPOLLING_COMPLIANCE_SEND_PATTERN             = 6'h08,
+    ltssmPOLLING_COMPLIANCE_POST_SEND_EIOS           = 6'h09,
+    ltssmPOLLING_COMPLIANCE_POST_TIMEOUT             = 6'h0A,
+    ltssmCONFIGURATION_LINKWIDTH_STATE_0             = 6'h0B,
+    ltssmCONFIGURATION_LINKWIDTH_STATE_1             = 6'h0C,
+    ltssmCONFIGURATION_LINKWIDTH_ACCEPT_0            = 6'h0D,
+    ltssmCONFIGURATION_LINKWIDTH_ACCEPT_1            = 6'h0E,
+    ltssmCONFIGURATION_LANENUM_WAIT                  = 6'h0F,
+    ltssmCONFIGURATION_LANENUM_ACCEPT                = 6'h10,
+    ltssmCONFIGURATION_COMPLETE_X1                   = 6'h11,
+    ltssmCONFIGURATION_COMPLETE_X2                   = 6'h12,
+    ltssmCONFIGURATION_COMPLETE_X4                   = 6'h13,
+    ltssmCONFIGURATION_COMPLETE_X8                   = 6'h14,
+    ltssmCONFIGURATION_IDLE                          = 6'h15,
+    ltssmL0                                          = 6'h16,
+    ltssmL1_ENTRY0                                   = 6'h17,
+    ltssmL1_ENTRY1                                   = 6'h18,
     ltssmL1_ENTRY2                                   = 6'h19,  // also used for the L2/L3 ready pseudo state
-    ltssmL1_IDLE                                     = 6'h1A, 
-    ltssmL1_EXIT                                     = 6'h1B, 
-    ltssmRECOVERY_RCVRLOCK                           = 6'h1C, 
-    ltssmRECOVERY_RCVRCFG                            = 6'h1D, 
-    ltssmRECOVERY_SPEED_0                            = 6'h1E, 
-    ltssmRECOVERY_SPEED_1                            = 6'h1F, 
-    ltssmRECOVERY_IDLE                               = 6'h20, 
-    ltssmHOT_RESET                                   = 6'h21, 
-    ltssmDISABLED_ENTRY_0                            = 6'h22, 
-    ltssmDISABLED_ENTRY_1                            = 6'h23, 
-    ltssmDISABLED_ENTRY_2                            = 6'h24, 
-    ltssmDISABLED_IDLE                               = 6'h25, 
-    ltssmROOT_PORT_CONFIGURATION_LINKWIDTH_STATE_0   = 6'h26, 
-    ltssmROOT_PORT_CONFIGURATION_LINKWIDTH_STATE_1   = 6'h27, 
-    ltssmROOT_PORT_CONFIGURATION_LINKWIDTH_STATE_2   = 6'h28, 
-    ltssmROOT_PORT_CONFIGURATION_LINK_WIDTH_ACCEPT_0 = 6'h29, 
-    ltssmROOT_PORT_CONFIGURATION_LINK_WIDTH_ACCEPT_1 = 6'h2A, 
-    ltssmROOT_PORT_CONFIGURATION_LANENUM_WAIT        = 6'h2B, 
-    ltssmROOT_PORT_CONFIGURATION_LANENUM_ACCEPT      = 6'h2C, 
-    ltssmTIMEOUT_TO_DETECT                           = 6'h2D, 
-    ltssmLOOPBACK_ENTRY0                             = 6'h2E, 
-    ltssmLOOPBACK_ENTRY1                             = 6'h2F, 
-    ltssmLOOPBACK_ACTIVE0                            = 6'h30, 
-    ltssmLOOPBACK_EXIT0                              = 6'h31, 
-    ltssmLOOPBACK_EXIT1                              = 6'h32, 
-    ltssmLOOPBACK_MASTER_ENTRY0                      = 6'h33 
+    ltssmL1_IDLE                                     = 6'h1A,
+    ltssmL1_EXIT                                     = 6'h1B,
+    ltssmRECOVERY_RCVRLOCK                           = 6'h1C,
+    ltssmRECOVERY_RCVRCFG                            = 6'h1D,
+    ltssmRECOVERY_SPEED_0                            = 6'h1E,
+    ltssmRECOVERY_SPEED_1                            = 6'h1F,
+    ltssmRECOVERY_IDLE                               = 6'h20,
+    ltssmHOT_RESET                                   = 6'h21,
+    ltssmDISABLED_ENTRY_0                            = 6'h22,
+    ltssmDISABLED_ENTRY_1                            = 6'h23,
+    ltssmDISABLED_ENTRY_2                            = 6'h24,
+    ltssmDISABLED_IDLE                               = 6'h25,
+    ltssmROOT_PORT_CONFIGURATION_LINKWIDTH_STATE_0   = 6'h26,
+    ltssmROOT_PORT_CONFIGURATION_LINKWIDTH_STATE_1   = 6'h27,
+    ltssmROOT_PORT_CONFIGURATION_LINKWIDTH_STATE_2   = 6'h28,
+    ltssmROOT_PORT_CONFIGURATION_LINK_WIDTH_ACCEPT_0 = 6'h29,
+    ltssmROOT_PORT_CONFIGURATION_LINK_WIDTH_ACCEPT_1 = 6'h2A,
+    ltssmROOT_PORT_CONFIGURATION_LANENUM_WAIT        = 6'h2B,
+    ltssmROOT_PORT_CONFIGURATION_LANENUM_ACCEPT      = 6'h2C,
+    ltssmTIMEOUT_TO_DETECT                           = 6'h2D,
+    ltssmLOOPBACK_ENTRY0                             = 6'h2E,
+    ltssmLOOPBACK_ENTRY1                             = 6'h2F,
+    ltssmLOOPBACK_ACTIVE0                            = 6'h30,
+    ltssmLOOPBACK_EXIT0                              = 6'h31,
+    ltssmLOOPBACK_EXIT1                              = 6'h32,
+    ltssmLOOPBACK_MASTER_ENTRY0                      = 6'h33
 }
 ltssm_t;
-//----------------------------------------------------------    
+//----------------------------------------------------------
 typedef enum logic
 {
-    PL_SEL_LNK_RATE_2_5 = 1'b0,  
+    PL_SEL_LNK_RATE_2_5 = 1'b0,
     PL_SEL_LNK_RATE_5_0 = 1'b1
 }
 pl_sel_lnk_rate_t;
-//----------------------------------------------------------    
+//----------------------------------------------------------
 typedef enum logic [1:0]
 {
     PL_SEL_LNK_WIDTH_x1 = 2'b00,
@@ -269,9 +273,65 @@ typedef enum logic [1:0]
     PL_SEL_LNK_WIDTH_x8 = 2'b11
 }
 pl_sel_lnk_width_t;
+//----------------------------------------------------------
+typedef enum logic [3:0]
+{
+    LINK_SR_SPEED_2_5 = 4'b0001,
+    LINK_SR_SPEED_5_0 = 4'b0010
+}
+link_sr_current_link_speed_t;
+//----------------------------------------------------------
+typedef enum logic [5:0]
+{
+    LINK_SR_LINK_WIDTH_x1  = 6'b00_0001,
+    LINK_SR_LINK_WIDTH_x2  = 6'b00_0010,
+    LINK_SR_LINK_WIDTH_x4  = 6'b00_0100,
+    LINK_SR_LINK_WIDTH_x8  = 6'b00_1000,
+    LINK_SR_LINK_WIDTH_x12 = 6'b00_1100,
+    LINK_SR_LINK_WIDTH_x16 = 6'b01_0000,
+    LINK_SR_LINK_WIDTH_x32 = 6'b10_0000
+}
+link_sr_negotiated_link_width_t;
+//----------------------------------------------------------
+typedef struct packed
+{
+    logic [3:0] RESERVED_15_12;
+    logic       link_autonomous_bandwidth_interrupt_enable;
+    logic       link_bandwidth_management_interrupt_enable;
+    logic       hardware_autonomous_width_disable;
+    logic       enable_clock_power_management;
+    logic       extended_synch;
+    logic       common_clock_configuration;
+    logic       retrain_link;
+    logic       link_disable;
+    logic       read_completion_boundary;
+    logic       RESERVED_2;
+    logic [1:0] active_state_power_management_control;
+}
+pcie_link_control_reg_t;
+//----------------------------------------------------------
+typedef struct packed
+{
+    logic                           link_autonomous_bandwidth_status;
+    logic                           link_bandwidth_management_status;
+    logic                           data_link_layer_link_active;
+    logic                           slot_clock_configuration;
+    logic                           link_training;
+    logic                           undefined;
+    link_sr_negotiated_link_width_t link_width;
+    link_sr_current_link_speed_t    link_speed;
+}
+pcie_link_status_reg_t;
+//----------------------------------------------------------
 
-//----------------------------------------------------------    
+//------------------------------------------------------------------------------
+function automatic dword_t reverse_bytes(input dword_t data);
     
+    return { data[7:0], data[15:8], data[23:16], data[31:24] };
+    
+endfunction
+
+
 //------------------------------------------------------------------------------
 endpackage // pcie_defs
 
