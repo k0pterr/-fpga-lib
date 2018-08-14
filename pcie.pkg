@@ -15,8 +15,10 @@
 
 package pcie_defs;
 
+localparam WORD_W  = 16;
 localparam DWORD_W = 32;
     
+typedef logic[ WORD_W-1:0] word_t; 
 typedef logic[DWORD_W-1:0] dword_t; 
     
 //------------------------------------------------------------------------------
