@@ -276,10 +276,14 @@ pl_sel_lnk_width_t;
 //----------------------------------------------------------
 typedef enum logic [3:0]
 {
-    LINK_SR_SPEED_2_5 = 4'b0001,
-    LINK_SR_SPEED_5_0 = 4'b0010
+    LINK_SR_LINK_SPEED_2_5 = 4'b0001,
+    LINK_SR_LINK_SPEED_5_0 = 4'b0010
 }
 link_sr_current_link_speed_t;
+
+function automatic string link_speed_name(input link_sr_current_link_speed_t value);
+    return value.name;
+endfunction
 //----------------------------------------------------------
 typedef enum logic [5:0]
 {
@@ -292,6 +296,10 @@ typedef enum logic [5:0]
     LINK_SR_LINK_WIDTH_x32 = 6'b10_0000
 }
 link_sr_negotiated_link_width_t;
+
+function automatic string link_width_name(input link_sr_negotiated_link_width_t value);
+    return value.name;
+endfunction
 //----------------------------------------------------------
 typedef struct packed
 {
