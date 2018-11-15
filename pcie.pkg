@@ -165,12 +165,21 @@ typedef struct packed
 }
 tlp_header1_t;
 //----------------------------------------------------------
+typedef enum logic [2:0]
+{
+    SC  = 3'b000,
+    UR  = 3'b001,
+    CRS = 3'b010,
+    CA  = 3'b100
+}
+compl_status_t;
+
 typedef struct packed
 {
-    logic [15:0] CplID;
-    logic [ 2:0] CplStatus;
-    logic        BCM;
-    logic [11:0] ByteCount;
+    logic [  15:0] CompleterID;
+    compl_status_t ComplStatus;
+    logic          BCM;
+    logic [  11:0] ByteCount;
 }
 tlp_header1_cpl_t;
 //----------------------------------------------------------
