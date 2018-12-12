@@ -29,56 +29,56 @@ interface axi4_lite_if
     logic              AWVALID;
     logic              AWREADY;
     logic [ADDR_W-1:0] AWADDR;
-    logic [       2:0] AWPROT;
+    //logic [       2:0] AWPROT;
 
     // write data channel
     logic              WVALID;
     logic              WREADY;
     logic [DATA_W-1:0] WDATA;
-    logic              WSTRB;
+    //logic              WSTRB;
 
     // write response channel
     logic              BVALID;
     logic              BREADY;
-    logic              BRESP;
+    //logic              BRESP;
 
     // read address channel
     logic              ARVALID;
     logic              ARREADY;
     logic [ADDR_W-1:0] ARADDR;
-    logic [       2:0] ARPROT;
+    //logic [       2:0] ARPROT;
 
     // read data channel
     logic              RVALID;
     logic              RREADY;
     logic [DATA_W-1:0] RDATA;
-    logic              RRESP;
+    //logic              RRESP;
 
 modport master
 (
     output AWVALID,
     input  AWREADY,
     output AWADDR,
-    output AWPROT,
+    //output AWPROT,
 
     output WVALID,
     input  WREADY,
     output WDATA,
-    output WSTRB,
+    //output WSTRB,
 
     input  BVALID,
     output BREADY,
-    input  BRESP,
+    //input  BRESP,
     
     output ARVALID,
     input  ARREADY,
     output ARADDR,
-    output ARPROT,
+    //output ARPROT,
 
     input  RVALID,
     output RREADY,
-    input  RDATA,
-    input  RRESP
+    input  RDATA
+    //input  RRESP
 );
 
 modport slave
@@ -86,26 +86,26 @@ modport slave
     input  AWVALID,
     output AWREADY,
     input  AWADDR,
-    input  AWPROT,
+    //input  AWPROT,
 
     input  WVALID,
     output WREADY,
     input  WDATA,
-    input  WSTRB,
+    //input  WSTRB,
 
     output BVALID,
     input  BREADY,
-    output BRESP,
+    //output BRESP,
 
     input  ARVALID,
     output ARREADY,
     input  ARADDR,
-    input  ARPROT,
+    //input  ARPROT,
 
     output RVALID,
     input  RREADY,
-    output RDATA,
-    output RRESP
+    output RDATA
+    //output RRESP
 );
 
 endinterface
