@@ -167,10 +167,10 @@ tlp_header1_t;
 //----------------------------------------------------------
 typedef enum logic [2:0]
 {
-    SC  = 3'b000,
-    UR  = 3'b001,
-    CRS = 3'b010,
-    CA  = 3'b100
+    SUCCESSFULL_COMPLETION  = 3'b000,
+    UNSUPPORTED_REQUEST     = 3'b001,
+    CFG_RETRY_STATUS        = 3'b010,
+    COMPLETER_ABORT         = 3'b100
 }
 compl_status_t;
 
