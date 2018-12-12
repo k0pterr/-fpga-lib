@@ -176,7 +176,9 @@ compl_status_t;
 
 typedef struct packed
 {
-    logic [  15:0] CompleterID;
+    logic [ 7:0]   BusNumber;
+    logic [ 4:0]   Device;
+    logic [ 2:0]   Function;
     compl_status_t ComplStatus;
     logic          BCM;
     logic [  11:0] ByteCount;
@@ -205,7 +207,9 @@ tlp_header2_cfg_t;
 //----------------------------------------------------------
 typedef struct packed
 {
-    logic [15:0] RqID;
+    logic [ 7:0] BusNumber;
+    logic [ 4:0] Device;
+    logic [ 2:0] Function;
     logic [ 7:0] Tag;
     logic        RESERVED_3_7;
     logic [ 6:0] LowerAddress;
