@@ -113,7 +113,7 @@ endinterface
 //
 //    AXI4
 //
-interface axi4_if
+interface axi4_wr_if
     #(
         parameter   ID_W  = 1,
         parameter ADDR_W  = 32,
@@ -152,27 +152,6 @@ interface axi4_if
     logic                      BREADY;
     logic [               1:0] BRESP;
 
-    // read address channel
-    logic                      ARVALID;
-    logic                      ARREADY;
-    logic [        ADDR_W-1:0] ARADDR;
-    logic [               7:0] ARLEN;
-    logic [               2:0] ARSIZE;
-    logic [               1:0] ARBURST;
-    logic                      ARLOCK;
-    logic [               3:0] ARCACHE;
-    logic [               2:0] ARPROT;
-    logic [               3:0] ARQOS;
-    logic [               3:0] ARREGION;
-
-    // read data channel
-    logic [          ID_W-1:0] RID;
-    logic                      RVALID;
-    logic                      RREADY;
-    logic [        DATA_W-1:0] RDATA;
-    logic [               1:0] RRESP;
-    logic                      RLAST;
-
 modport master
 (
     output AWVALID,
@@ -196,26 +175,7 @@ modport master
     input  BID,
     input  BVALID,
     output BREADY,
-    input  BRESP,
-
-    output ARVALID,
-    input  ARREADY,
-    output ARADDR,
-    output ARLEN,
-    output ARSIZE,
-    output ARBURST,
-    output ARLOCK,
-    output ARCACHE,
-    output ARPROT,
-    output ARQOS,
-    output ARREGION,
-
-    input  RID,
-    input  RVALID,
-    output RREADY,
-    input  RDATA,
-    input  RRESP,
-    input  RLAST
+    input  BRESP
 );
 
 modport slave
@@ -241,8 +201,69 @@ modport slave
     output  BID,
     output  BVALID,
     input   BREADY,
-    output  BRESP,
+    output  BRESP
 
+);
+
+endinterface
+//------------------------------------------------------------------------------
+interface axi4_rd_if
+    #(
+        parameter   ID_W  = 1,
+        parameter ADDR_W  = 32,
+        parameter DATA_W  = 32
+    )
+(
+    // global
+    input logic ACLK,
+    input logic ARESETn
+);
+
+    // read address channel
+    logic                      ARVALID;
+    logic                      ARREADY;
+    logic [        ADDR_W-1:0] ARADDR;
+    logic [               7:0] ARLEN;
+    logic [               2:0] ARSIZE;
+    logic [               1:0] ARBURST;
+    logic                      ARLOCK;
+    logic [               3:0] ARCACHE;
+    logic [               2:0] ARPROT;
+    logic [               3:0] ARQOS;
+    logic [               3:0] ARREGION;
+
+    // read data channel
+    logic [          ID_W-1:0] RID;
+    logic                      RVALID;
+    logic                      RREADY;
+    logic [        DATA_W-1:0] RDATA;
+    logic [               1:0] RRESP;
+    logic                      RLAST;
+
+modport master
+(
+    output ARVALID,
+    input  ARREADY,
+    output ARADDR,
+    output ARLEN,
+    output ARSIZE,
+    output ARBURST,
+    output ARLOCK,
+    output ARCACHE,
+    output ARPROT,
+    output ARQOS,
+    output ARREGION,
+
+    input  RID,
+    input  RVALID,
+    output RREADY,
+    input  RDATA,
+    input  RRESP,
+    input  RLAST
+);
+
+modport slave
+(
     input   ARVALID,
     output  ARREADY,
     input   ARADDR,
