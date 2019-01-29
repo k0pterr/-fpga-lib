@@ -154,6 +154,7 @@ interface axi4_wr_if
 
 modport master
 (
+    output AWID,
     output AWVALID,
     input  AWREADY,
     output AWADDR,
@@ -180,6 +181,7 @@ modport master
 
 modport slave
 (
+    input   AWID,
     input   AWVALID,
     output  AWREADY,
     input   AWADDR,
