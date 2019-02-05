@@ -375,7 +375,22 @@ typedef struct packed
 }
 pcie_device_capabilities_reg_t;
 //----------------------------------------------------------
-
+typedef struct packed
+{
+    logic       bridge_cfg_retry_en;
+    logic [2:0] MRS;
+    logic       enable_no_snoop;
+    logic       aux_power_pm_en;
+    logic       phantom_functions_en;
+    logic       extended_tag_field_en;
+    logic [2:0] MPS;
+    logic       enable_relaxed_ordering;
+    logic       unsupported_request_reporting_en;
+    logic       fatal_error_reporting_en;
+    logic       nonfatal_error_reporting_en;
+    logic       correctable_error_reporting_en;
+}
+pcie_device_control_reg_t;
 //------------------------------------------------------------------------------
 function automatic dword_t reverse_bytes(input dword_t data);
     
