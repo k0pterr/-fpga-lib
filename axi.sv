@@ -6,7 +6,7 @@
 //*
 //*      Version 1.0
 //*
-//*      Copyright (c) 2018, Harry E. Zhurov
+//*      Copyright (c) 2018-2019, Harry E. Zhurov
 //*
 //------------------------------------------------------------------------------
 
@@ -25,34 +25,34 @@ interface axi4_lite_if
     input logic ARESETn
 );
 
-    // write address channel
-    logic                AWVALID;
-    logic                AWREADY;
-    logic [  ADDR_W-1:0] AWADDR;
-    logic [         2:0] AWPROT;
+// write address channel
+logic                AWVALID;
+logic                AWREADY;
+logic [  ADDR_W-1:0] AWADDR;
+logic [         2:0] AWPROT;
 
-    // write data channel
-    logic                WVALID;
-    logic                WREADY;
-    logic [  DATA_W-1:0] WDATA;
-    logic [DATA_W/8-1:0] WSTRB;
+// write data channel
+logic                WVALID;
+logic                WREADY;
+logic [  DATA_W-1:0] WDATA;
+logic [DATA_W/8-1:0] WSTRB;
 
-    // write response channel
-    logic                BVALID;
-    logic                BREADY;
-    logic                BRESP;
+// write response channel
+logic                BVALID;
+logic                BREADY;
+logic                BRESP;
 
-    // read address channel
-    logic                ARVALID;
-    logic                ARREADY;
-    logic [  ADDR_W-1:0] ARADDR;
-    logic [         2:0] ARPROT;
+// read address channel
+logic                ARVALID;
+logic                ARREADY;
+logic [  ADDR_W-1:0] ARADDR;
+logic [         2:0] ARPROT;
 
-    // read data channel
-    logic                RVALID;
-    logic                RREADY;
-    logic [  DATA_W-1:0] RDATA;
-    logic                RRESP;
+// read data channel
+logic                RVALID;
+logic                RREADY;
+logic [  DATA_W-1:0] RDATA;
+logic                RRESP;
 
 modport master
 (
@@ -117,7 +117,8 @@ interface axi4_wr_if
     #(
         parameter   ID_W  = 1,
         parameter ADDR_W  = 32,
-        parameter DATA_W  = 32
+        parameter DATA_W  = 32,
+        parameter string ALIGN_DATA = "NO"
     )
 (
     // global
@@ -125,32 +126,49 @@ interface axi4_wr_if
     input logic ARESETn
 );
 
-    // write address channel
-    logic [          ID_W-1:0] AWID;
-    logic                      AWVALID;
-    logic                      AWREADY;
-    logic [        ADDR_W-1:0] AWADDR;
-    logic [               7:0] AWLEN;
-    logic [               2:0] AWSIZE;
-    logic [               1:0] AWBURST;
-    logic                      AWLOCK;
-    logic [               3:0] AWCACHE;
-    logic [               2:0] AWPROT;
-    logic [               3:0] AWQOS;
-    logic [               3:0] AWREGION;
+// write address channel
+logic [          ID_W-1:0] AWID;
+logic                      AWVALID;
+logic                      AWREADY;
+logic [        ADDR_W-1:0] AWADDR;
+logic [               7:0] AWLEN;
+logic [               2:0] AWSIZE;
+logic [               1:0] AWBURST;
+logic                      AWLOCK;
+logic [               3:0] AWCACHE;
+logic [               2:0] AWPROT;
+logic [               3:0] AWQOS;
+logic [               3:0] AWREGION;
 
-    // write data channel
-    logic                      WVALID;
-    logic                      WREADY;
-    logic [        DATA_W-1:0] WDATA;
-    logic [      DATA_W/8-1:0] WSTRB;
-    logic                      WLAST;
+// write data channel
+logic                      WVALID;
+logic                      WREADY;
+logic [        DATA_W-1:0] WDATA;
+logic [      DATA_W/8-1:0] WSTRB;
+logic                      WLAST;
 
-    // write response channel
-    logic [          ID_W-1:0] BID;
-    logic                      BVALID;
-    logic                      BREADY;
-    logic [               1:0] BRESP;
+// write response channel
+logic [          ID_W-1:0] BID;
+logic                      BVALID;
+logic                      BREADY;
+logic [               1:0] BRESP;
+
+if(ALIGN_DATA == "YES") begin : adb  // align data block
+    
+    logic [DATA_W-1:0] wdata;
+    
+    always_ff @(posedge ACLK) begin
+        if(ARESETn) begin
+            wdata <= 0;
+        end
+        else begin
+            wdata <= wdata + 1;
+
+        end
+    end
+    
+    assign WDATA = wdata;
+end
 
 modport master
 (
@@ -221,26 +239,26 @@ interface axi4_rd_if
     input logic ARESETn
 );
 
-    // read address channel
-    logic                      ARVALID;
-    logic                      ARREADY;
-    logic [        ADDR_W-1:0] ARADDR;
-    logic [               7:0] ARLEN;
-    logic [               2:0] ARSIZE;
-    logic [               1:0] ARBURST;
-    logic                      ARLOCK;
-    logic [               3:0] ARCACHE;
-    logic [               2:0] ARPROT;
-    logic [               3:0] ARQOS;
-    logic [               3:0] ARREGION;
+// read address channel
+logic                      ARVALID;
+logic                      ARREADY;
+logic [        ADDR_W-1:0] ARADDR;
+logic [               7:0] ARLEN;
+logic [               2:0] ARSIZE;
+logic [               1:0] ARBURST;
+logic                      ARLOCK;
+logic [               3:0] ARCACHE;
+logic [               2:0] ARPROT;
+logic [               3:0] ARQOS;
+logic [               3:0] ARREGION;
 
-    // read data channel
-    logic [          ID_W-1:0] RID;
-    logic                      RVALID;
-    logic                      RREADY;
-    logic [        DATA_W-1:0] RDATA;
-    logic [               1:0] RRESP;
-    logic                      RLAST;
+// read data channel
+logic [          ID_W-1:0] RID;
+logic                      RVALID;
+logic                      RREADY;
+logic [        DATA_W-1:0] RDATA;
+logic [               1:0] RRESP;
+logic                      RLAST;
 
 modport master
 (
