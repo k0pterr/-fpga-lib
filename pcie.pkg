@@ -360,17 +360,17 @@ pcie_max_payload_size_t;
 //--------------------------------------
 typedef struct packed
 {
-    logic [2:0]              RESERVED_31_29;
-    logic                    function_level_reset_cap;
-    logic [1:0]              captured_slot_power_limit_scale;
-    logic [7:0]              captured_slot_power_limit_value;
-    logic [1:0]              RESERVED_17_16;
-    logic                    role_based_error_reporting;
-    logic [2:0]              undefined;
-    logic [2:0]              endpoint_L1_acceptable_latency;
-    logic [2:0]              endpoint_L0s_acceptable_latency;
-    logic                    extended_tag_field_supported;
-    logic [1:0]              phantom_functions_supproted;
+    logic [2:0] RESERVED_31_29;
+    logic       function_level_reset_cap;
+    logic [1:0] captured_slot_power_limit_scale;
+    logic [7:0] captured_slot_power_limit_value;
+    logic [1:0] RESERVED_17_16;
+    logic       role_based_error_reporting;
+    logic [2:0] undefined;
+    logic [2:0] endpoint_L1_acceptable_latency;
+    logic [2:0] endpoint_L0s_acceptable_latency;
+    logic       extended_tag_field_supported;
+    logic [1:0] phantom_functions_supproted;
     pcie_max_payload_size_t  MPS;
 }
 pcie_device_capabilities_reg_t;
