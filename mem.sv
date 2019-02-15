@@ -71,7 +71,8 @@ module distributed_reg_rom_m
                 #(
                    parameter int ADDR_WIDTH,
                    parameter int WORD_WIDTH,
-                   parameter logic [WORD_WIDTH-1:0] INIT_DATA [0:2**ADDR_WIDTH-1]    
+                   parameter int ROM_SIZE = 2**ADDR_WIDTH,
+                   parameter logic [WORD_WIDTH-1:0] INIT_DATA [ROM_SIZE]    
                  )
 (
     input  logic                  clk,
@@ -79,12 +80,6 @@ module distributed_reg_rom_m
     input  logic [ADDR_WIDTH-1:0] addr,
     output logic [WORD_WIDTH-1:0] data
 );
-
-//==============================================================================
-//    Settings
-//==============================================================================
-
-localparam ROM_SIZE = 2**ADDR_WIDTH;
 
 //==============================================================================
 //    Objects
