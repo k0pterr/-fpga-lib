@@ -51,13 +51,13 @@ reg [1:0] cnt  /* synthesis syn_preserve=1 */;
     end
 endmodule
 //------------------------------------------------------------------------------
-module rst_m
+module rst_m #( parameter N = 3 )
 (
     input  bit clk,
     output bit q
 );
 
-bit [1:0] cnt  /* synthesis syn_preserve=1 */;
+bit [$clog2(N)-1:0] cnt  /* synthesis syn_preserve=1 */;
 bit       out;
 
 // synopsys translate_off
@@ -71,7 +71,7 @@ end
 assign q = ~out;
 
 always @(posedge clk) begin
-    if(cnt < 3) begin
+    if(cnt < N) begin
         cnt <= cnt + 1;
         out <= 0;
     end
