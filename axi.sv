@@ -306,5 +306,37 @@ modport slave
 
 endinterface
 //------------------------------------------------------------------------------
+interface axis_if
+    #(
+        parameter   DATA_W = 64,
+        localparam  KEEP_W = DATA_W/8
+    );
+
+logic [  DATA_W-1:0] TDATA;
+logic                TVALID;
+logic                TREADY;
+logic [  KEEP_W-1:0] TKEEP;
+logic                TLAST;
+
+modport master    
+(
+    output TDATA,    
+    output TVALID,   
+    input  TREADY,   
+    output TKEEP,    
+    output TLAST
+);
+
+modport slave
+(
+    input  TDATA,    
+    input  TVALID,   
+    output TREADY,   
+    input  TKEEP,    
+    input  TLAST
+);
+
+endinterface
+//------------------------------------------------------------------------------
 
 
