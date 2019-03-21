@@ -308,32 +308,106 @@ endinterface
 //------------------------------------------------------------------------------
 interface axis_if
     #(
-        parameter   DATA_W = 64,
-        localparam  KEEP_W = DATA_W/8
-    );
+        parameter   DATA_W    = 64,
+        localparam  KEEP_W    = DATA_W/8
+    )
+(
+);
 
-logic [  DATA_W-1:0] TDATA;
-logic                TVALID;
-logic                TREADY;
-logic [  KEEP_W-1:0] TKEEP;
-logic                TLAST;
+logic              TVALID;
+logic              TREADY;
+logic [DATA_W-1:0] TDATA;
+logic [KEEP_W-1:0] TKEEP;
+logic              TLAST;
 
 modport master    
 (
-    output TDATA,    
-    output TVALID,   
-    input  TREADY,   
-    output TKEEP,    
+    output TVALID,
+    input  TREADY,
+    output TDATA,
+    output TKEEP,  
     output TLAST
 );
 
 modport slave
 (
-    input  TDATA,    
-    input  TVALID,   
-    output TREADY,   
-    input  TKEEP,    
+    input  TVALID,
+    output TREADY,
+    input  TDATA,
+    input  TKEEP,
     input  TLAST
+);
+
+endinterface
+//------------------------------------------------------------------------------
+interface axis_reg_if
+    #(
+        parameter   DATA_W    = 64,
+        localparam  KEEP_W    = DATA_W/8
+    )
+(
+    input logic ACLK,
+    input logic ARESETn
+);
+
+//  objects
+logic              TVALID;
+logic              TREADY;
+logic [DATA_W-1:0] TDATA;
+logic [KEEP_W-1:0] TKEEP;
+logic              TLAST;
+
+logic [DATA_W-1:0] tdata;    
+logic [KEEP_W-1:0] tkeep;
+logic              tlast;
+logic              ready;  // ready to get data from input
+logic              valid;  // valid data for output
+logic              full = 0;
+logic              wr_en;
+logic              rd_en;
+
+//  logic 
+assign ready = !full || rd_en;
+assign valid = full;
+
+always_ff @(posedge ACLK) begin
+    if(!full) begin
+        if(wr_en) begin
+            full <= 1;
+        end
+    end
+    else begin
+        if(!wr_en && rd_en) begin
+            full <= 0;
+        end
+    end
+end
+
+always_ff @(posedge ACLK) begin
+    if(wr_en && ready) begin  // input handshake
+        tdata <= TDATA;
+        tkeep <= TKEEP;
+        tlast <= TLAST;
+    end
+end
+
+//  modports
+modport master    
+(
+    output .TVALID  ( wr_en ),
+    input  .TREADY  ( ready ),
+    output TDATA,
+    output TKEEP,  
+    output TLAST
+);
+
+modport slave
+(
+    input  .TVALID ( valid ),
+    output .TREADY ( rd_en ),
+    input  .TDATA  ( tdata ),
+    input  .TKEEP  ( tkeep ),
+    input  .TLAST  ( tlast )
 );
 
 endinterface
