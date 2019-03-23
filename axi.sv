@@ -117,8 +117,7 @@ interface axi4_wr_if
     #(
         parameter   ID_W  = 1,
         parameter ADDR_W  = 32,
-        parameter DATA_W  = 32,
-        parameter string ALIGN_DATA = "NO"
+        parameter DATA_W  = 32
     )
 (
     // global
@@ -152,23 +151,6 @@ logic [          ID_W-1:0] BID;
 logic                      BVALID;
 logic                      BREADY;
 logic [               1:0] BRESP;
-
-if(ALIGN_DATA == "YES") begin : adb  // align data block
-    
-    logic [DATA_W-1:0] wdata;
-    
-    always_ff @(posedge ACLK) begin
-        if(ARESETn) begin
-            wdata <= 0;
-        end
-        else begin
-            wdata <= wdata + 1;
-
-        end
-    end
-    
-    assign WDATA = wdata;
-end
 
 modport master
 (
