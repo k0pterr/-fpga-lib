@@ -152,6 +152,43 @@ logic                      BVALID;
 logic                      BREADY;
 logic [               1:0] BRESP;
 
+
+logic [  DATA_W-1:0] wdata;    
+logic [DATA_W/8-1:0] wstrb;
+logic                wlast = 0;
+logic                wready;  // ready to get data from data channel input
+logic                wvalid;  // valid data for data channel output
+logic                full = 0;
+logic                wr_en;
+logic                rd_en;
+
+
+//  logic 
+assign wready = !full || rd_en;
+assign wvalid = full;
+
+always_ff @(posedge ACLK) begin
+    if(!full) begin
+        if(wr_en) begin
+            full <= 1;
+        end
+    end
+    else begin
+        if(!wr_en && rd_en) begin
+            full <= 0;
+        end
+    end
+end
+
+always_ff @(posedge ACLK) begin
+    if(wr_en && wready) begin  // input handshake
+        wdata <= WDATA;
+        wstrb <= WSTRB;
+        wlast <= WLAST;
+    end
+end
+
+//  modports
 modport master
 (
     output AWID,
@@ -167,8 +204,8 @@ modport master
     output AWQOS,
     output AWREGION,
 
-    output WVALID,
-    input  WREADY,
+    output .WVALID ( wr_en  ),
+    input  .WREADY ( wready ),
     output WDATA,
     output WSTRB,
     output WLAST,
@@ -194,11 +231,11 @@ modport slave
     input   AWQOS,
     input   AWREGION,
 
-    input   WVALID,
-    output  WREADY,
-    input   WDATA,
-    input   WSTRB,
-    input   WLAST,
+    input   .WVALID ( wvalid ),
+    output  .WREADY ( rd_en  ),
+    input   .WDATA  ( wdata  ),
+    input   .WSTRB  ( wstrb  ),
+    input   .WLAST  ( wlast  ),
 
     output  BID,
     output  BVALID,
