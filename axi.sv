@@ -378,7 +378,7 @@ logic              TLAST;
 
 logic [DATA_W-1:0] tdata;    
 logic [KEEP_W-1:0] tkeep;
-logic              tlast;
+logic              tlast = 0;
 logic              ready;  // ready to get data from input
 logic              valid;  // valid data for output
 logic              full = 0;
