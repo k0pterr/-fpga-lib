@@ -55,7 +55,7 @@
 //------------------------------------------------------------------------------
 module reg_stage_m
     #(
-        parameter type DATA_T
+        parameter type DATA_T = logic
      )
 (
     input  logic   clk,
