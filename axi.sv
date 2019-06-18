@@ -117,8 +117,7 @@ interface axi4_wr_if
     #(
         parameter   ID_W  = 1,
         parameter ADDR_W  = 32,
-        parameter DATA_W  = 32,
-        parameter string ALIGN_DATA = "NO"
+        parameter DATA_W  = 32
     )
 (
     // global
@@ -153,23 +152,43 @@ logic                      BVALID;
 logic                      BREADY;
 logic [               1:0] BRESP;
 
-if(ALIGN_DATA == "YES") begin : adb  // align data block
-    
-    logic [DATA_W-1:0] wdata;
-    
-    always_ff @(posedge ACLK) begin
-        if(ARESETn) begin
-            wdata <= 0;
-        end
-        else begin
-            wdata <= wdata + 1;
 
+logic [  DATA_W-1:0] wdata;    
+logic [DATA_W/8-1:0] wstrb;
+logic                wlast = 0;
+logic                wready;  // ready to get data from data channel input
+logic                wvalid;  // valid data for data channel output
+logic                full = 0;
+logic                wr_en;
+logic                rd_en;
+
+
+//  logic 
+assign wready = !full || rd_en;
+assign wvalid = full;
+
+always_ff @(posedge ACLK) begin
+    if(!full) begin
+        if(wr_en) begin
+            full <= 1;
         end
     end
-    
-    assign WDATA = wdata;
+    else begin
+        if(!wr_en && rd_en) begin
+            full <= 0;
+        end
+    end
 end
 
+always_ff @(posedge ACLK) begin
+    if(wr_en && wready) begin  // input handshake
+        wdata <= WDATA;
+        wstrb <= WSTRB;
+        wlast <= WLAST;
+    end
+end
+
+//  modports
 modport master
 (
     output AWID,
@@ -185,8 +204,8 @@ modport master
     output AWQOS,
     output AWREGION,
 
-    output WVALID,
-    input  WREADY,
+    output .WVALID ( wr_en  ),
+    input  .WREADY ( wready ),
     output WDATA,
     output WSTRB,
     output WLAST,
@@ -212,11 +231,11 @@ modport slave
     input   AWQOS,
     input   AWREGION,
 
-    input   WVALID,
-    output  WREADY,
-    input   WDATA,
-    input   WSTRB,
-    input   WLAST,
+    input   .WVALID ( wvalid ),
+    output  .WREADY ( rd_en  ),
+    input   .WDATA  ( wdata  ),
+    input   .WSTRB  ( wstrb  ),
+    input   .WLAST  ( wlast  ),
 
     output  BID,
     output  BVALID,
@@ -302,6 +321,112 @@ modport slave
     output  RDATA,
     output  RRESP,
     output  RLAST
+);
+
+endinterface
+//------------------------------------------------------------------------------
+interface axis_if
+    #(
+        parameter   DATA_W    = 64,
+        localparam  KEEP_W    = DATA_W/8
+    )
+(
+);
+
+logic              TVALID;
+logic              TREADY;
+logic [DATA_W-1:0] TDATA;
+logic [KEEP_W-1:0] TKEEP;
+logic              TLAST;
+
+modport master    
+(
+    output TVALID,
+    input  TREADY,
+    output TDATA,
+    output TKEEP,  
+    output TLAST
+);
+
+modport slave
+(
+    input  TVALID,
+    output TREADY,
+    input  TDATA,
+    input  TKEEP,
+    input  TLAST
+);
+
+endinterface
+//------------------------------------------------------------------------------
+interface axis_reg_if
+    #(
+        parameter   DATA_W    = 64,
+        localparam  KEEP_W    = DATA_W/8
+    )
+(
+    input logic ACLK,
+    input logic ARESETn
+);
+
+//  objects
+logic              TVALID;
+logic              TREADY;
+logic [DATA_W-1:0] TDATA;
+logic [KEEP_W-1:0] TKEEP;
+logic              TLAST;
+
+logic [DATA_W-1:0] tdata;    
+logic [KEEP_W-1:0] tkeep;
+logic              tlast = 0;
+logic              ready;  // ready to get data from input
+logic              valid;  // valid data for output
+logic              full = 0;
+logic              wr_en;
+logic              rd_en;
+
+//  logic 
+assign ready = !full || rd_en;
+assign valid = full;
+
+always_ff @(posedge ACLK) begin
+    if(!full) begin
+        if(wr_en) begin
+            full <= 1;
+        end
+    end
+    else begin
+        if(!wr_en && rd_en) begin
+            full <= 0;
+        end
+    end
+end
+
+always_ff @(posedge ACLK) begin
+    if(wr_en && ready) begin  // input handshake
+        tdata <= TDATA;
+        tkeep <= TKEEP;
+        tlast <= TLAST;
+    end
+end
+
+//  modports
+modport master    
+(
+    output .TVALID  ( wr_en ),
+    input  .TREADY  ( ready ),
+    output TDATA,
+    output TKEEP,  
+    output TLAST
+);
+
+modport slave
+(
+    input  .TVALID ( valid ),
+    output .TREADY ( rd_en ),
+    input  .TDATA  ( tdata ),
+    input  .TKEEP  ( tkeep ),
+    input  .TLAST  ( tlast )
 );
 
 endinterface
