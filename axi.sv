@@ -374,59 +374,57 @@ logic              TVALID;
 logic              TREADY;
 logic [DATA_W-1:0] TDATA;
 logic [KEEP_W-1:0] TKEEP;
-logic              TLAST;
+logic              TLAST = 0;
 
-logic [DATA_W-1:0] tdata;    
-logic [KEEP_W-1:0] tkeep;
-logic              tlast = 0;
-logic              ready;  // ready to get data from input
-logic              valid;  // valid data for output
-logic              full = 0;
-logic              wr_en;
-logic              rd_en;
+logic              valid_in;
+logic              ready_in;
+logic [DATA_W-1:0] data_in;
+logic [KEEP_W-1:0] keep_in;
+logic              last_in;
+logic              buf_valid = 0;
 
 //  logic 
-assign ready = !full || rd_en;
-assign valid = full;
+assign TVALID   = buf_valid;
+assign ready_in = !buf_valid || TREADY;
 
 always_ff @(posedge ACLK) begin
-    if(!full) begin
-        if(wr_en) begin
-            full <= 1;
+    if(!buf_valid) begin
+        if(valid_in) begin
+            buf_valid <= 1;
         end
     end
     else begin
-        if(!wr_en && rd_en) begin
-            full <= 0;
+        if(!valid_in && TREADY) begin
+            buf_valid <= 0;
         end
     end
 end
 
 always_ff @(posedge ACLK) begin
-    if(wr_en && ready) begin  // input handshake
-        tdata <= TDATA;
-        tkeep <= TKEEP;
-        tlast <= TLAST;
+    if(valid_in && ready_in) begin  // input handshake
+        TDATA <= data_in;
+        TKEEP <= keep_in;
+        TLAST <= last_in;
     end
 end
 
 //  modports
 modport master    
 (
-    output .TVALID  ( wr_en ),
-    input  .TREADY  ( ready ),
-    output TDATA,
-    output TKEEP,  
-    output TLAST
+    output .TVALID ( valid_in ),
+    input  .TREADY ( ready_in ),
+    output .TDATA  ( data_in  ),
+    output .TKEEP  ( keep_in  ),
+    output .TLAST  ( last_in  )
 );
 
 modport slave
 (
-    input  .TVALID ( valid ),
-    output .TREADY ( rd_en ),
-    input  .TDATA  ( tdata ),
-    input  .TKEEP  ( tkeep ),
-    input  .TLAST  ( tlast )
+    input  TVALID,
+    output TREADY,
+    input  TDATA,
+    input  TKEEP,
+    input  TLAST 
 );
 
 endinterface
