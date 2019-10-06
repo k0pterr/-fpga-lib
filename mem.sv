@@ -13,7 +13,8 @@ module sdp_distributed_ram_m
                 #(
                    parameter int ADDR_WIDTH,
                    parameter int WORD_WIDTH,
-                   parameter     OUT_REGISTERED = "YES"  
+                   parameter     OUT_REGISTERED = "YES",
+                   parameter     INIT_FILE = ""  
                  )
 (
     input  logic                  clk,
@@ -44,6 +45,13 @@ logic [WORD_WIDTH-1:0] ram[RAM_SIZE];
 //==============================================================================
 //     Logic
 //==============================================================================
+
+//------------------------------------------------------------------------------
+initial begin
+    if(INIT_FILE != "") begin
+        $readmemh(INIT_FILE, ram, 0);
+    end
+end
 
 //------------------------------------------------------------------------------
 always_ff @(posedge clk) begin
