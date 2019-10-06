@@ -39,7 +39,7 @@ localparam RAM_SIZE = 2**ADDR_WIDTH;
 //==============================================================================
 
 (* ram_style="distributed" *)
-logic [WORD_WIDTH-1:0] ram [RAM_SIZE];
+logic [WORD_WIDTH-1:0] ram[RAM_SIZE];
 
 //==============================================================================
 //     Logic
