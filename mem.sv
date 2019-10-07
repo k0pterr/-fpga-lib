@@ -94,7 +94,7 @@ module distributed_reg_rom_m
 //==============================================================================
 
 (* rom_style="distributed" *)
-logic [WORD_WIDTH-1:0] rom [ROM_SIZE];
+logic [WORD_WIDTH-1:0] rom[ROM_SIZE];
 
 //==============================================================================
 //     Logic
