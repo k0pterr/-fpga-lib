@@ -3,6 +3,7 @@
 //
 //  modules:       sdp_distributed_ram_m
 //                 distributed_reg_rom_m
+//                 distributed_rom_m
 //
 //  description:   inferred memory modules
 //------------------------------------------------------------------------------
@@ -113,3 +114,40 @@ always_ff @(posedge clk) begin
 end
 
 endmodule : distributed_reg_rom_m
+
+//******************************************************************************
+//******************************************************************************
+module distributed_rom_m
+                #(
+                   parameter int ADDR_WIDTH,
+                   parameter int WORD_WIDTH,
+                   parameter int ROM_SIZE = 2**ADDR_WIDTH,
+                   parameter     INIT_FILE = ""  
+                 )
+(
+    input  logic [ADDR_WIDTH-1:0] addr,
+    output logic [WORD_WIDTH-1:0] data
+);
+
+//==============================================================================
+//    Objects
+//==============================================================================
+
+(* rom_style="distributed" *)
+logic [WORD_WIDTH-1:0] rom[ROM_SIZE];
+
+//==============================================================================
+//     Logic
+//==============================================================================
+
+//------------------------------------------------------------------------------
+initial begin
+    if(INIT_FILE != "") begin
+        $readmemh(INIT_FILE, rom, 0);
+    end
+end
+
+//------------------------------------------------------------------------------
+assign data = rom[addr];
+
+endmodule : distributed_rom_m
