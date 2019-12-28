@@ -17,5 +17,8 @@
             $write("%-50s - OFF %s\n", `"x`", y);   \
         `endif
 
+//------------------------------------------------------------------------------
+`define CONSTRUCT_DIR(path1,path2) { path1, "/", path2 }
+
 `endif // COMMON_SVH
 
