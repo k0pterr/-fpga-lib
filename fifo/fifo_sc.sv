@@ -2,7 +2,7 @@
 //
 //    Project:     Any
 //
-//    Description: Instantiated FIFO modules
+//    Description: Instantiated Single-Clock FIFO module
 //
 //------------------------------------------------------------------------------
 
