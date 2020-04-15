@@ -23,7 +23,7 @@
 //       4. "builtin", "BUILTIN"
 //   
 //
-module fifo_sc_c_m
+module fifo_sc_rdc_m
 #(
     parameter type DATA_ITEM_TYPE = logic,
     parameter      DEPTH          = 32,
@@ -124,6 +124,6 @@ fifo_instance
 );
 //------------------------------------------------------------------------------
 
-endmodule : fifo_sc_c_m
+endmodule : fifo_sc_rdc_m
 //------------------------------------------------------------------------------
 
