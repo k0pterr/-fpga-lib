@@ -114,6 +114,32 @@ fifo_instance
     .dbiterr        (             )
 );
 //------------------------------------------------------------------------------
+//
+//    SVA
+//
+property overflow_detect;
+    @(posedge wr_clk)
+    disable iff (rst)
+    !(push && full);
+endproperty
+
+property underflow_detect;
+    @(posedge rd_clk)
+    disable iff (rst)
+    !(pop && empty);
+endproperty
+
+assert property ( overflow_detect ) else begin
+    $error($time, "ns FIFO overflow at %m");
+    $stop(2);
+end
+assert property ( underflow_detect ) else begin
+    $error($time, "ns FIFO underflow at %m");
+    $stop(2);
+end
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 
 endmodule : fifo_dc_m
 //------------------------------------------------------------------------------

@@ -107,6 +107,31 @@ fifo_instance
     .wr_data_count (             ),
     .prog_full     (             )
 );
+
+//------------------------------------------------------------------------------
+//
+//    SVA
+//
+property overflow_detect;
+    @(posedge clk)
+    disable iff (rst)
+    !(push && full);
+endproperty
+
+property underflow_detect;
+    @(posedge clk)
+    disable iff (rst)
+    !(pop && empty);
+endproperty
+
+assert property ( overflow_detect ) else begin
+    $error($time, "ns FIFO overflow at %m");
+    $stop(2);
+end
+assert property ( underflow_detect ) else begin
+    $error($time, "ns FIFO underflow at %m");
+    $stop(2);
+end
 //------------------------------------------------------------------------------
 
 endmodule : fifo_sc_rdc_m
