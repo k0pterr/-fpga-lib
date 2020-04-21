@@ -23,10 +23,10 @@ module fifo_dc_m
 #(
     parameter type WR_DATA_ITEM_TYPE = logic,
     parameter type RD_DATA_ITEM_TYPE = logic,
-    parameter      DEPTH          = 32,
-    parameter      MEMTYPE        = "auto",
-    parameter      RELATED_CLOCKS = "no",
-    parameter      SYNC_STAGES    = 2
+    parameter      DEPTH             = 32,
+    parameter      MEMTYPE           = "auto",
+    parameter      RELATED_CLOCKS    = "no",
+    parameter      SYNC_STAGES       = 2
 )
 (
     input  logic              wr_clk,
