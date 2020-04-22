@@ -429,5 +429,44 @@ modport slave
 
 endinterface
 //------------------------------------------------------------------------------
+module automatic axis_reg_slice_m
+#(
+    parameter   DATA_W    = 64,
+    localparam  KEEP_W    = DATA_W/8
+)
+(
+    input logic     clk,
+    axis_if.master  s,
+    axis_if.slave   m
+);
+    
+logic buf_valid = 0;
+    
+assign s.TVALID = buf_valid;
+assign m.TREADY = !buf_valid || s.TREADY;
+
+always_ff @(posedge clk) begin
+    if(!buf_valid) begin
+        if(m.TVALID) begin
+            buf_valid <= 1;
+        end
+    end
+    else begin
+        if(!m.TVALID && s.TREADY) begin
+            buf_valid <= 0;
+        end
+    end
+end
+
+always_ff @(posedge clk) begin
+    if(m.TVALID && m.TREADY) begin  // input handshake
+        s.TDATA <= m.TDATA;
+        s.TKEEP <= m.TKEEP;
+        s.TLAST <= m.TLAST;
+    end
+end
+    
+endmodule
+//------------------------------------------------------------------------------
 
 

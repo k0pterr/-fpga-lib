@@ -7,8 +7,8 @@
 //                 see Xilinx xapp 052, xapp 211
 //------------------------------------------------------------------------------
 
-`ifndef RNDGEN_PKG
-`define RNDGEN_PKG
+`ifndef RNDGEN_H
+`define RNDGEN_H
 
 //******************************************************************************
 //******************************************************************************
@@ -25,13 +25,16 @@ typedef struct {
 //==============================================================================
 
 //------------------------------------------------------------------------------
-localparam RndGenParams_t RndGen8  = '{  8, '{  8,  6,  5,  4,  0 } };
-localparam RndGenParams_t RndGen9  = '{  9, '{  9,  5,  0,  0,  0 } };
-localparam RndGenParams_t RndGen15 = '{ 15, '{ 15, 14,  0,  0,  0 } };
-localparam RndGenParams_t RndGen31 = '{ 31, '{ 31, 28,  0,  0,  0 } };
+localparam RndGenParams_t RndGen8  = '{  8, '{  8,  6,   5,   4,  0 } };
+localparam RndGenParams_t RndGen9  = '{  9, '{  9,  5,   0,   0,  0 } };
+localparam RndGenParams_t RndGen15 = '{ 15, '{ 15, 14,   0,   0,  0 } };
+localparam RndGenParams_t RndGen27 = '{ 27, '{ 27, 26,  25,  22,  0 } };
+localparam RndGenParams_t RndGen31 = '{ 31, '{ 31, 28,   0,   0,  0 } };
+localparam RndGenParams_t RndGen37 = '{ 37, '{ 37, 12,  10,   2,  0 } };
+
 
 endpackage : rndgen_pkg
 
-`endif // RNDGEN_PKG
+`endif // RNDGEN_H
 //------------------------------------------------------------------------------
 
