@@ -88,24 +88,24 @@ fifo_instance
     .rd_en         ( pop         ),
     .full          ( full        ),
     .empty         ( empty       ),
+    .rd_data_count ( data_count  ),
+    .wr_rst_busy   ( wr_rst_busy ),
+    .rd_rst_busy   ( rd_rst_busy ),
 
+    .data_valid    (             ),
+    .almost_empty  (             ),
+    .underflow     (             ),
+    .prog_empty    (             ),
+    .wr_ack        (             ),
+    .almost_full   (             ),
+    .overflow      (             ),
+    .wr_data_count (             ),
+    .prog_full     (             ),
     .sleep         ( 1'b0        ),
     .injectdbiterr ( 1'b0        ),
     .injectsbiterr ( 1'b0        ),
     .dbiterr       (             ),
-    .sbiterr       (             ),
-    .data_valid    (             ),
-    .almost_empty  (             ),
-    .rd_rst_busy   ( rd_rst_busy ),
-    .underflow     (             ),
-    .rd_data_count ( data_count  ),
-    .prog_empty    (             ),
-    .wr_ack        (             ),
-    .almost_full   (             ),
-    .wr_rst_busy   ( wr_rst_busy ),
-    .overflow      (             ),
-    .wr_data_count (             ),
-    .prog_full     (             )
+    .sbiterr       (             )
 );
 
 //------------------------------------------------------------------------------
