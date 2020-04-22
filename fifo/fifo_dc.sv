@@ -126,7 +126,7 @@ endproperty
 property underflow_detect;
     @(posedge rd_clk)
     disable iff (rst)
-    !(pop && empty);
+    !(pop && empty && $time);
 endproperty
 
 assert property ( overflow_detect ) else begin
