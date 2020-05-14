@@ -1,13 +1,11 @@
 //------------------------------------------------------------------------------
 //
-//
+//    ANB common stuff
 //
 //
 //------------------------------------------------------------------------------
 
 `include "common.svh"
-`include "bmd_mc.svh"
-`include "dpc_defs.svh"
 `include "cfg_params_generated.svh"
 
 //------------------------------------------------------------------------------
@@ -16,15 +14,16 @@
 //
 //     ANB Address Channel Interface
 //
-interface anb_addr_channel_if;
+interface anb_addr_channel_if
+#(
+    parameter type ADDR_T = logic,
+    parameter type LEN_T  = logic
+);
 
-import bmd_mc_defs::*;
-import dpc_defs::*;
-
-smc_addr_t        addr;    
-task_data_len_t   len;     
-logic             avalid;     
-logic             aready;     
+ADDR_T   addr;    
+LEN_T    len;     
+logic    avalid;     
+logic    aready;     
 
 modport m
 (
@@ -80,20 +79,22 @@ endinterface : anb_data_channel_if
 //
 //     ANB Write Interface
 //
-interface anb_wr_if;
+interface anb_wr_if
+#(
+    parameter type ADDR_T = logic,
+    parameter type LEN_T  = logic,
+    parameter type DATA_T = logic
+);
+    
+ADDR_T   addr;    
+LEN_T    len;     
+logic    avalid;     
+logic    aready;     
 
-import bmd_mc_defs::*;
-import dpc_defs::*;
-
-smc_addr_t        addr;    
-task_data_len_t   len;     
-logic             avalid;     
-logic             aready;     
-
-smc_data_t        data;   
-logic             last;       
-logic             valid;      
-logic             ready;   
+DATA_T   data;   
+logic    last;       
+logic    valid;      
+logic    ready;   
 
 
 modport m
@@ -127,20 +128,22 @@ endinterface : anb_wr_if
 //
 //     ANB Read Interface
 //
-interface anb_rd_if;
+interface anb_rd_if
+#(
+    parameter type ADDR_T = logic,
+    parameter type LEN_T  = logic,
+    parameter type DATA_T = logic
+);
 
-import bmd_mc_defs::*;
-import dpc_defs::*;
+ADDR_T  addr;
+LEN_T   len;
+logic   avalid;
+logic   aready;
 
-smc_addr_t       addr;
-task_data_len_t  len;
-logic            avalid;
-logic            aready;
-
-smc_data_t       data;
-logic            last;
-logic            valid;
-logic            ready;
+DATA_T  data;
+logic   last;
+logic   valid;
+logic   ready;
 
 modport m
 (
@@ -175,29 +178,30 @@ endinterface : anb_rd_if
 //
 interface smc_rd_if
 #(
-    parameter N = 1
+    parameter N = 1,
+    parameter type ADDR_T = logic,
+    parameter type LEN_T  = logic,
+    parameter type DATA_T = logic
 );
 
-import bmd_mc_defs::*;    
-
-typedef logic [clog2(N)-1:0] rd_id_t;
-
+typedef logic [       clog2(N)-1:0] rd_id_t;
+typedef logic [$bits(DATA_T)/8-1:0] data_be_t;
 
 // Address channel
-rd_id_t            aid;
-smc_addr_t         addr;
-smc_trn_max_len_t  len;
-logic              avalid;
-logic              aready;
+rd_id_t  aid;
+ADDR_T   addr;
+LEN_T    len;
+logic    avalid;
+logic    aready;
 
 
 //  Data channel
-rd_id_t            id;  
-smc_data_t         data;
-smc_data_be_t      strb;
-logic              valid;     // slave valid
-logic              ready;     // slave ready
-logic              last;
+rd_id_t    id;  
+DATA_T     data;
+data_be_t  strb;
+logic      valid;     // slave valid
+logic      ready;     // slave ready
+logic      last;
 
 modport m
 (
