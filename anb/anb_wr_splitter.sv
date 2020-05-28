@@ -6,9 +6,6 @@
 //------------------------------------------------------------------------------
 
 `include "common.svh"
-`include "bmd_mc.svh"
-`include "dpc_defs.svh"
-`include "cfg_params_generated.svh"
 
 //------------------------------------------------------------------------------
 
@@ -17,6 +14,11 @@
 //   
 //
 module automatic anb_wr_splitter_m
+#(
+    parameter type ADDR_T,
+    parameter type LEN_T,
+    parameter type DATA_T
+)
 (
     input  logic   clk,
     input  logic   rst,
@@ -27,9 +29,6 @@ module automatic anb_wr_splitter_m
     anb_data_channel_if.s    m_d,
     anb_data_channel_if.m    s_d
 );
-    
-import bmd_mc_defs::*;  
-import dpc_defs::*;
     
 //------------------------------------------------------------------------------
 //
@@ -42,15 +41,15 @@ import dpc_defs::*;
 //
 typedef struct packed
 {
-    smc_addr_t        addr;    
-    task_data_len_t   len;     
+    ADDR_T  addr;    
+    LEN_T   len;     
 }
 adata_t;
 
 typedef struct packed
 {
-    smc_data_t data;   
-    logic      last;       
+    DATA_T data;   
+    logic last;       
 }
 ddata_t;
 
