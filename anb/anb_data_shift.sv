@@ -153,7 +153,7 @@ endfunction
 //------------------------------------------------
 function data_count_t tail_data_count(input offset_t offset, input len_t len);
 
-    return ( offset + len)%DATA_W;
+    return ( offset + len)%(DATA_W/SPAN);
     
 endfunction
 //------------------------------------------------------------------------------
