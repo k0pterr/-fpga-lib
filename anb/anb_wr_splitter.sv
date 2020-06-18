@@ -42,6 +42,8 @@ localparam ANB_DWC    = $bits(DATA_T)/PCIE_DW_W;    // ANB data bus Double Word 
 localparam ANB_DWC_W  = clog2(ANB_DWC);             //
 localparam ANB_BC     = $bits(DATA_T)/8;            // ANB data bus byte count
 localparam ANB_BC_W   = clog2(ANB_BC);              //
+//localparam ANB_WC     = 2**$bits(LEN_T)/ANB_BC;     // ANB data bus word count
+//localparam ANB_WC_W   = clog2(ANB_WC);              //
     
     
 //------------------------------------------------------------------------------
@@ -88,10 +90,12 @@ control_block_fsm_t;
 //typedef logic [clog2(PCIE_BYTES)-1:0] dw_byte_addr_t;
 typedef logic [ANB_DWC_W-1:0] anb_dwc_t;
 typedef logic [ ANB_BC_W-1:0] anb_bc_t;
+//typedef logic [ ANB_WC_W-1:0] anb_wc_t;
 
-typedef logic [clog2(PAGE_SIZE)-1:0] inpage_addr_t;
-typedef logic [ bits(PAGE_SIZE)-1:0] seg_len_t;
-typedef logic [ clog2(PAGE_DWC)-1:0] seg_len_dw_t;
+typedef logic [      clog2(PAGE_SIZE)-1:0] inpage_addr_t;
+typedef logic [       bits(PAGE_SIZE)-1:0] seg_len_t;
+typedef logic [       clog2(PAGE_DWC)-1:0] seg_len_dw_t;
+typedef logic [bits(PAGE_SIZE/ANB_BC)-1:0] seg_len_anbw_t;
 
 //------------------------------------------------------------------------------
 //
@@ -111,11 +115,18 @@ ADDR_T              curr_addr_reg;
 LEN_T               rlen;               // residual length
 seg_len_t           max_seg_len;
 seg_len_t           curr_len;
+seg_len_anbw_t      curr_len_anbw;
 anb_dwc_t           ds_offset;          // 'ds' means 'data shifter'
 anb_dwc_t           ds_offset_reg;      // 'ds' means 'data shifter'
 anb_dwc_t           ds_last_word_len;   // 'ds' means 'data shifter'
                     
 logic               avalid = 0;
+
+logic               cb_dready  = 0;
+logic               cb_dvalid  = 0;
+
+anb_data_channel_if #( .DATA_T( DATA_T) ) ds_data_in();
+anb_data_channel_if #( .DATA_T( DATA_T) ) ds_data_out();
 
 //------------------------------------------------------------------------------
 //
@@ -146,6 +157,15 @@ function anb_dwc_t last_word_dw_len(input anb_bc_t len);
     return len/PCIE_BYTES + |len[0 +:clog2(PCIE_BYTES)];
 
 endfunction
+//------------------------------------------------
+function seg_len_anbw_t seg_len_anbw(input seg_len_t len);
+
+    return len/ANB_BC + |len[ANB_BC_W-1:0];
+
+endfunction
+
+
+
 //------------------------------------------------
 //function offset_t offset(input dw_byte_addr_t addr,
 //                         input LEN_T          len);
@@ -287,10 +307,48 @@ always_comb begin
     drs_in.data.data = m_d.data;
     drs_in.data.last = m_d.last;
 
-    s_d.valid        = drs_out.valid;
-    drs_out.ready    = s_d.ready;
-    s_d.data         = drs_out.data.data;
-    s_d.last         = drs_out.data.last;
+//  s_d.valid        = drs_out.valid;
+//  drs_out.ready    = s_d.ready;
+//  s_d.data         = drs_out.data.data;
+//  s_d.last         = drs_out.data.last;
+    
+    ds_data_in.valid    = drs_out.valid;
+    drs_out.ready       = ds_data_in.ready;
+    ds_data_in.data     = drs_out.data.data;
+    ds_data_in.last     = drs_out.data.last;
+    
+    s_d.valid         = ds_data_out.valid;
+    ds_data_out.ready = s_d.ready;
+    s_d.data          = ds_data_out.data;
+    s_d.last          = ds_data_out.last;
+    
+end
+
+always_comb begin
+    
+    cb_dready = 0;
+    
+    case(cbfsm)
+    //--------------------------------------------
+    cbfsmPATH: begin
+        if(cbfsm_next == cbfsmPATH) begin
+            cb_dready = ds_data_in.ready;
+        end
+    end
+    //--------------------------------------------
+    cbfsmSEG: begin
+        cb_dready = 1;
+        if(drs_out.data.last) begin
+            if(cbfsm_next == cbfsmSEG) begin
+                cb_dready = 0;
+            end
+        end
+    end
+    //--------------------------------------------
+    endcase
+    
+    cb_dvalid = cb_dready;
+    
 end
 
 //----------------------------------------------------------
@@ -354,6 +412,7 @@ always_comb begin
     end
     //--------------------------------------------
     endcase
+    curr_len_anbw = seg_len_anbw(curr_len);
 end
 
 always_ff @(posedge clk) begin
@@ -382,13 +441,14 @@ end
 int N = 0;
 always_ff @(posedge clk) begin
     if(avalid) begin
-        $display("[%t], SEG%1d, fsm: %x -> %x curr_addr: %x, curr_len: %5d, rlen: %5d, ds_offset: %1d, ds_last_word_len: %1d", 
+        $display("[%t], SEG%1d, fsm: %x -> %x curr_addr: %x, curr_len: %5d, curr_len_anbw: %4d, rlen: %5d, ds_offset: %1d, ds_last_word_len: %1d", 
                  $realtime, 
                  N++,
                  cbfsm,
                  cbfsm_next,
                  curr_addr,
                  curr_len,
+                 curr_len_anbw,
                  cbfsm == cbfsmPATH ? ars_out.data.len - curr_len : rlen < PAGE_SIZE ? rlen - curr_len : rlen - PAGE_SIZE,
                  ds_offset,
                  //ds_offset_reg,
@@ -431,6 +491,22 @@ data_ch_reg_slice
     .ready_dst ( drs_out.ready ),
     .dst       ( drs_out.data  )
 );
+//------------------------------------------------------------------------------
+anb_data_align_m
+#(
+    .DATA_W     ( ANB_BC     ),    // data units
+    .MAX_OFFSET ( ANB_DWC    ),    // data units
+    .SPAN       ( PCIE_BYTES )     // data unit size
+)
+data_shift
+(
+    .clk    ( clk              ),
+    .offset ( ds_offset        ),
+    .len    ( ds_last_word_len ),
+    .m      ( ds_data_in       ),
+    .s      ( ds_data_out      )
+);
+
 //------------------------------------------------------------------------------
 
 endmodule : anb_wr_splitter_m
