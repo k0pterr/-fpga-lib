@@ -33,6 +33,10 @@ function automatic int max(input int x, input int y);
     return x > y ? x : y;
 endfunction
 //------------------------------------------------------------------------------
+function automatic int min(input int x, input int y);
+    return x < y ? x : y;
+endfunction
+//------------------------------------------------------------------------------
 function automatic int bits(input int x);
     int n = clog2(x);
     return  ( x == (1 << n) ) ? n + 1 : n;
