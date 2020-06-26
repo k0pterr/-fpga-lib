@@ -204,7 +204,7 @@ always_comb begin : mux_b
     end
     //----------------------------------------
     fsmRUN: begin
-        s.data = merge_out(data_reg, m.data, offset);
+        s.data = merge_out(data_reg, m.data, offset_reg);
         
         s.valid = m.valid;
         m.ready = s.ready;
@@ -227,7 +227,7 @@ end : mux_b
 
 always_ff @(posedge clk) begin
     if(m.valid && m.ready) begin
-        data_reg <= data_slice_high(m.data, offset);
+        data_reg <= data_slice_high(m.data, fsm == fsmWAIT ? offset : offset_reg);
     end
     
     if(fsm == fsmWAIT && m.valid) begin
