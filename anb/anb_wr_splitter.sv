@@ -11,7 +11,7 @@
 
 //------------------------------------------------------------------------------
 //
-//   
+//
 //
 module automatic anb_wr_splitter_m
 #(
@@ -22,19 +22,19 @@ module automatic anb_wr_splitter_m
 (
     input  logic   clk,
     input  logic   rst,
-    
+
     anb_addr_channel_if.s    m_a,
     anb_addr_channel_if.m    s_a,
-    
+
     anb_data_channel_if.s    m_d,
     anb_data_channel_if.m    s_d
 );
-    
+
 //------------------------------------------------------------------------------
 //
 //    Settings
 //
-localparam PAGE_SIZE  = 4096;                       // bytes    
+localparam PAGE_SIZE  = 4096;                       // bytes
 localparam PCIE_DW_W  = 32;                         // bits
 localparam PCIE_BYTES = PCIE_DW_W/8;                // bytes
 localparam PAGE_DWC   = PAGE_SIZE/PCIE_BYTES;       // PCIe DWs
@@ -44,23 +44,23 @@ localparam ANB_BC     = $bits(DATA_T)/8;            // ANB data bus byte count
 localparam ANB_BC_W   = clog2(ANB_BC);              //
 //localparam ANB_WC     = 2**$bits(LEN_T)/ANB_BC;     // ANB data bus word count
 //localparam ANB_WC_W   = clog2(ANB_WC);              //
-    
-    
+
+
 //------------------------------------------------------------------------------
 //
 //    Types
 //
 typedef struct packed
 {
-    ADDR_T  addr;    
-    LEN_T   len;     
+    ADDR_T  addr;
+    LEN_T   len;
 }
 adata_t;
 
 typedef struct packed
 {
-    DATA_T data;   
-    logic last;       
+    DATA_T data;
+    logic last;
 }
 ddata_t;
 
@@ -76,16 +76,24 @@ typedef struct
 {
     logic      valid;
     logic      ready;
-    ddata_t    data;    
+    ddata_t    data;
 }
 data_ch_t;
 
 typedef enum logic [1:0]
 {
-    cbfsmPATH,
-    cbfsmSEG
+    afsmIDLE,
+    afsmSEG
 }
-control_block_fsm_t;
+address_channel_fsm_t;
+
+typedef enum logic [1:0]
+{
+    dfsmIDLE,
+    dfsmRUN
+}
+data_channel_fsm_t;
+
 
 //typedef logic [clog2(PCIE_BYTES)-1:0] dw_byte_addr_t;
 typedef logic [ANB_DWC_W-1:0] anb_dwc_t;
@@ -101,29 +109,40 @@ typedef logic [bits(PAGE_SIZE/ANB_BC)-1:0] seg_len_anbw_t;
 //
 //    Objects
 //
-addr_ch_t           ars_in;           // Address (channel) Register Slice Input
-addr_ch_t           ars_out;          // Address (channel) Register Slice Output
-                    
-data_ch_t           drs_in;           // Data (channel) Register Slice Input
-data_ch_t           drs_out;          // Data (channel) Register Slice Output
+addr_ch_t             ars_in;           // Address (channel) Register Slice Input
+addr_ch_t             ars_out;          // Address (channel) Register Slice Output
 
-control_block_fsm_t cbfsm = cbfsmPATH;
-control_block_fsm_t cbfsm_next;
+data_ch_t             drs_in;           // Data (channel) Register Slice Input
+data_ch_t             drs_out;          // Data (channel) Register Slice Output
 
-ADDR_T              curr_addr;
-ADDR_T              curr_addr_reg;
-LEN_T               rlen;               // residual length
-seg_len_t           max_seg_len;
-seg_len_t           curr_len;
-seg_len_anbw_t      curr_len_anbw;
-anb_dwc_t           ds_offset;          // 'ds' means 'data shifter'
-anb_dwc_t           ds_offset_reg;      // 'ds' means 'data shifter'
-anb_dwc_t           ds_last_word_len;   // 'ds' means 'data shifter'
-                    
-logic               avalid = 0;
+address_channel_fsm_t afsm = afsmIDLE;
+address_channel_fsm_t afsm_next;
 
-logic               cb_dready  = 0;
-logic               cb_dvalid  = 0;
+data_channel_fsm_t    dfsm = dfsmIDLE;
+data_channel_fsm_t    dfsm_next;
+
+ADDR_T                curr_addr;
+ADDR_T                curr_addr_reg;
+LEN_T                 rlen;               // residual length
+seg_len_t             max_seg_len;
+seg_len_t             curr_len;
+seg_len_anbw_t        curr_len_anbw;
+seg_len_anbw_t        curr_len_anbw_cnt = 0;
+anb_dwc_t             ds_offset;          // 'ds' means 'data shifter'
+anb_dwc_t             ds_offset_reg;      // 'ds' means 'data shifter'
+anb_dwc_t             ds_last_word_len;   // 'ds' means 'data shifter'
+
+logic                 avalid = 0;
+logic                 dfirst = 1;
+//logic                 dlast  = 0;
+
+seg_len_anbw_t        anbw_cnt;
+
+logic                 cb_dready  = 0;
+logic                 cb_dvalid  = 0;
+
+logic                 cb_din_handshake;
+logic                 cb_dout_handshake;
 
 anb_data_channel_if #( .DATA_T( DATA_T) ) ds_data_in();
 anb_data_channel_if #( .DATA_T( DATA_T) ) ds_data_out();
@@ -140,15 +159,15 @@ endfunction
 
 //------------------------------------------------
 function seg_len_t seg_len(input inpage_addr_t addr);
-    
+
     return PAGE_SIZE - addr;
-    
+
 endfunction
 //------------------------------------------------
 function seg_len_dw_t seg_len_dw(input inpage_addr_t addr);
-    
+
     return ( PAGE_SIZE - (addr & ~2'b11) )/PCIE_BYTES;
-    
+
 endfunction
 //------------------------------------------------
 function anb_dwc_t last_word_dw_len(input anb_bc_t len);
@@ -294,11 +313,16 @@ always_comb begin
     m_a.aready       = ars_in.ready;
     ars_in.data.addr = m_a.addr;
     ars_in.data.len  = m_a.len;
-    
-    s_a.avalid       = ars_out.valid;
-    ars_out.ready    = s_a.aready;
-    s_a.addr         = ars_out.data.addr;
-    s_a.len          = ars_out.data.len;
+
+//  s_a.avalid       = ars_out.valid;
+//  ars_out.ready    = s_a.aready;
+//  s_a.addr         = ars_out.data.addr;
+//  s_a.len          = ars_out.data.len;
+
+    s_a.avalid       = avalid;
+    ars_out.ready    = afsm == afsmIDLE;
+    s_a.addr         = curr_addr;
+    s_a.len          = curr_len;
 end
 
 always_comb begin
@@ -311,145 +335,289 @@ always_comb begin
 //  drs_out.ready    = s_d.ready;
 //  s_d.data         = drs_out.data.data;
 //  s_d.last         = drs_out.data.last;
-    
-    ds_data_in.valid    = drs_out.valid;
-    drs_out.ready       = ds_data_in.ready;
-    ds_data_in.data     = drs_out.data.data;
-    ds_data_in.last     = drs_out.data.last;
-    
+
+//  ds_data_in.valid    = drs_out.valid;
+//  drs_out.ready       = ds_data_in.ready;
+//  ds_data_in.data     = drs_out.data.data;
+//  ds_data_in.last     = drs_out.data.last;
+
     s_d.valid         = ds_data_out.valid;
     ds_data_out.ready = s_d.ready;
     s_d.data          = ds_data_out.data;
     s_d.last          = ds_data_out.last;
-    
+
 end
 
 always_comb begin
-    
+
     cb_dready = 0;
-    
-    case(cbfsm)
+
+    case(afsm)
     //--------------------------------------------
-    cbfsmPATH: begin
-        if(cbfsm_next == cbfsmPATH) begin
-            cb_dready = ds_data_in.ready;
+    afsmIDLE: begin
+        cb_dready = ds_data_in.ready;
+        if(afsm_next == afsmIDLE) begin
         end
     end
     //--------------------------------------------
-    cbfsmSEG: begin
-        cb_dready = 1;
+    afsmSEG: begin
+        cb_dready = ds_data_in.ready;
         if(drs_out.data.last) begin
-            if(cbfsm_next == cbfsmSEG) begin
+            if(afsm_next == afsmSEG) begin
                 cb_dready = 0;
             end
         end
     end
     //--------------------------------------------
     endcase
-    
+
     cb_dvalid = cb_dready;
-    
+
 end
 
-//----------------------------------------------------------
+//--------------------------------------------------------------------
 //
-//    Control Block FSM
+//    Address Channel FSM
 //
 always_ff @(posedge clk) begin
-    cbfsm <= cbfsm_next;
+    afsm <= afsm_next;
 end
 
 always_comb begin
-    cbfsm_next = cbfsm;
-    
-    case(cbfsm)
+    afsm_next = afsm;
+
+    case(afsm)
     //--------------------------------------------
-    cbfsmPATH: begin
+    afsmIDLE: begin
         max_seg_len = seg_len(ars_out.data.addr);
-        if(ars_out.valid) begin
-            if(max_seg_len) begin  // addr not aligned to page boundary
-                if(max_seg_len < ars_out.data.len) begin
-                    cbfsm_next = cbfsmSEG;
-                end
+        if(ars_out.valid && s_a.aready && dfsm == dfsmIDLE) begin
+            //if(max_seg_len) begin  // addr not aligned to page boundary
+            if(ars_out.data.len > ANB_BC || ars_out.data.len > max_seg_len ) begin
+                afsm_next = afsmSEG;
             end
         end
     end
     //--------------------------------------------
-    cbfsmSEG: begin
+    afsmSEG: begin
         if(rlen == curr_len) begin
-            cbfsm_next = cbfsmPATH;
+            afsm_next = afsmIDLE;
         end
     end
     //--------------------------------------------
     endcase
-        
+
 end
+//--------------------------------------------------------------------
 
 always_comb begin
     avalid = 0;
-    case(cbfsm)
+    case(afsm)
     //--------------------------------------------
-    cbfsmPATH: begin
+    afsmIDLE: begin
         curr_addr        = ars_out.data.addr;
-        curr_len         = cbfsm_next == cbfsmSEG ? max_seg_len : ars_out.data.len;
+        curr_len         = afsm_next == afsmSEG ? min(ars_out.data.len, max_seg_len) : ars_out.data.len;
         ds_offset        = 0;
-        ds_last_word_len = 'x; // last_word_dw_len(curr_len);
-        avalid           = cbfsm_next == cbfsmSEG ? 1 : ars_out.valid;
+        ds_last_word_len = 'x;
+        avalid           = afsm_next == afsmSEG ? 1 : ars_out.valid;
     end
     //--------------------------------------------
-    cbfsmSEG: begin
-        avalid    = 1;                 // ???
+    afsmSEG: begin
+//      if(dfsm == dfsmRUN && cb_dout_handshake &&
+//         curr_len_anbw_cnt == 1) begin
+//          avalid = 1;
+//      end
+        avalid = dfsm == dfsmIDLE;
+        
         curr_addr = curr_addr_reg;
-        ds_offset = ds_offset_reg;
+        ds_offset = avalid ? ds_offset_reg : 0;
         if(rlen < PAGE_SIZE) begin
             curr_len = rlen;
         end
         else begin
             curr_len = PAGE_SIZE;
         end
+        //ds_last_word_len = ds_offset + last_word_dw_len(curr_len);
         ds_last_word_len = last_word_dw_len(curr_len);
-        
+
     end
     //--------------------------------------------
     endcase
-    curr_len_anbw = seg_len_anbw(curr_len);
+    //curr_len_anbw = seg_len_anbw(curr_len);
+    curr_len_anbw = seg_len_anbw(ds_offset*PCIE_BYTES + curr_len);
 end
 
 always_ff @(posedge clk) begin
-    case(cbfsm)
+    case(afsm)
     //--------------------------------------------
-    cbfsmPATH: begin
-        curr_addr_reg <= ars_out.data.addr + curr_len;
+    afsmIDLE: begin
+        curr_addr_reg     <= ars_out.data.addr + curr_len;
+        //curr_len_anbw_cnt <= curr_len_anbw;
         //ds_offset_reg <= ANB_DWC - seg_len_dw(ars_out.data.addr)%ANB_DWC;
         ds_offset_reg <= seg_len_dw(ars_out.data.addr)%ANB_DWC;
         if(ars_out.valid) begin
             rlen <= ars_out.data.len - curr_len;
         end
-        
+
     end
     //--------------------------------------------
-    cbfsmSEG: begin
+    afsmSEG: begin
         if(avalid) begin
-            curr_addr_reg <= curr_addr_reg + curr_len;
-            rlen          <= rlen < PAGE_SIZE ? rlen - curr_len : rlen - PAGE_SIZE;
+            curr_addr_reg     <= curr_addr_reg + curr_len;
+            //curr_len_anbw_cnt <= curr_len_anbw;
+            rlen              <= rlen < PAGE_SIZE ? rlen - curr_len : rlen - PAGE_SIZE;
         end
     end
     //--------------------------------------------
     endcase
 end
 
+//--------------------------------------------------------------------
+//
+//    Data Channel FSM
+//
+always_ff @(posedge clk) begin
+    dfsm <= dfsm_next;
+end
+
+always_comb begin
+
+    dfsm_next = dfsm;
+
+    case(dfsm)
+    //--------------------------------------------
+    dfsmIDLE: begin
+        if(avalid) begin
+            dfsm_next = dfsmRUN;
+//          if(afsm == afsmIDLE && afsm_next == afsmIDLE) begin         // no boundary crossing
+//              if( cb_din_handshake && drs_out.data.last ) begin       // check if only one ANB word
+//                  dfsm_next = dfsmIDLE;
+//              end
+//          end
+            if(curr_len_anbw == 1) begin
+                dfsm_next = dfsmIDLE;
+            end
+        end
+    end
+    //--------------------------------------------
+    dfsmRUN: begin
+        if(cb_dout_handshake && curr_len_anbw_cnt == 1) begin
+            dfsm_next = dfsmIDLE;
+        end
+    end
+    //--------------------------------------------
+    endcase
+
+end
+//--------------------------------------------------------------------
+always_comb begin
+    drs_out.ready = 0;
+
+    ds_data_in.valid = 0;
+    ds_data_in.data  = drs_out.data.data;
+    ds_data_in.last  = 0;
+
+    
+    case(dfsm)
+    //--------------------------------------------
+    dfsmIDLE: begin
+        
+        if(cb_dout_handshake && curr_len_anbw == 1 ) begin
+            ds_data_in.last = 1;
+        end
+
+        case(afsm)
+        //--------------------------------------------
+        afsmIDLE: begin
+            if(afsm_next == afsmIDLE) begin                               // no boundary crossing
+                drs_out.ready    = ds_data_in.ready;                      // path handshake signals
+                ds_data_in.valid = drs_out.valid;                         //
+            end
+            else begin
+                drs_out.ready    = ds_data_in.last ? 0 : ds_data_in.ready;
+                ds_data_in.valid = drs_out.valid;
+            end
+        end
+        //--------------------------------------------
+        afsmSEG: begin
+            drs_out.ready    = ds_data_in.last && afsm_next == afsmSEG ? 0 : ds_data_in.ready;
+            ds_data_in.valid = drs_out.valid;
+        end
+        //--------------------------------------------
+        endcase
+
+    end
+    //--------------------------------------------
+    dfsmRUN: begin
+        drs_out.ready    = ds_data_in.last ? 0 : ds_data_in.ready;
+        ds_data_in.valid = drs_out.valid;
+        if(cb_dout_handshake && curr_len_anbw_cnt == 1) begin
+            ds_data_in.last = 1;
+        end
+    end
+    //--------------------------------------------
+    endcase
+
+end
+
+always_comb begin
+    cb_din_handshake  = drs_out.valid && drs_out.ready;
+    cb_dout_handshake = ds_data_in.valid && ds_data_in.ready;
+end
+
+always_comb begin
+    if(avalid) begin
+        anbw_cnt = curr_len_anbw;
+    end
+    else begin
+        anbw_cnt = curr_len_anbw_cnt;
+    end
+end
+
+always_ff @(posedge clk) begin
+    case(dfsm)
+    //--------------------------------------------
+    dfsmIDLE: begin
+        if(avalid) begin
+            curr_len_anbw_cnt <= curr_len_anbw - 1;
+            //if(afsm_next == afsmSEG) begin
+            if(cb_dout_handshake && curr_len_anbw > 1) begin
+                dfirst <= 0;
+            end
+        end
+    end
+    //--------------------------------------------
+    dfsmRUN: begin
+        if(cb_dout_handshake) begin
+            dfirst <= 0;
+            curr_len_anbw_cnt <= curr_len_anbw_cnt - 1;
+            if(curr_len_anbw_cnt == 1) begin
+       //         dfirst <= 1;
+            end
+        end
+
+        if(avalid) begin
+            curr_len_anbw_cnt <= curr_len_anbw;
+        end
+    end
+    //--------------------------------------------
+    endcase
+
+end
+
+
+
 int N = 0;
 always_ff @(posedge clk) begin
     if(avalid) begin
-        $display("[%t], SEG%1d, fsm: %x -> %x curr_addr: %x, curr_len: %5d, curr_len_anbw: %4d, rlen: %5d, ds_offset: %1d, ds_last_word_len: %1d", 
-                 $realtime, 
+        $display("[%t], SEG%1d, fsm: %x -> %x curr_addr: %x, curr_len: %5d, curr_len_anbw: %4d, rlen: %5d, ds_offset: %1d, ds_last_word_len: %1d",
+                 $realtime,
                  N++,
-                 cbfsm,
-                 cbfsm_next,
+                 afsm,
+                 afsm_next,
                  curr_addr,
                  curr_len,
                  curr_len_anbw,
-                 cbfsm == cbfsmPATH ? ars_out.data.len - curr_len : rlen < PAGE_SIZE ? rlen - curr_len : rlen - PAGE_SIZE,
+                 afsm == afsmIDLE ? ars_out.data.len - curr_len : rlen < PAGE_SIZE ? rlen - curr_len : rlen - PAGE_SIZE,
                  ds_offset,
                  //ds_offset_reg,
                  ds_last_word_len );
