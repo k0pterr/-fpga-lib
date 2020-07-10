@@ -521,7 +521,7 @@ always_comb begin : dfsm_comb_b
     case(dfsm)
     //--------------------------------------------
     dfsmIDLE: begin
-        if( !dsci_queue.empty && drs_out.valid ) begin
+        if( !dsci_queue.empty && drs_out.valid && ds_data_in.ready ) begin
             next = dfsmRUN;
             if(curr_len_anbw == 1 && ds_data_in.valid && ds_data_in.ready) begin
                 next = dfsmIDLE;
@@ -561,7 +561,7 @@ always_comb begin
     //--------------------------------------------
     dfsmIDLE: begin
 
-        if( !dsci_queue.empty && drs_out.valid ) begin
+        if( !dsci_queue.empty && drs_out.valid && ds_data_in.ready ) begin
             valid = drs_out.valid;
             if( curr_len_anbw == 1 ) begin
                 last  = 1;
@@ -625,8 +625,8 @@ always_comb begin
     //--------------------------------------------
     dfsmIDLE: begin
         //if( dfsm_next == dfsmRUN ) begin
-        if( !dsci_queue.empty && drs_out.valid ) begin
-            if(curr_len_anbw == 1 && ds_data_in.ready) begin
+        if( !dsci_queue.empty && drs_out.valid  && ds_data_in.ready ) begin
+            if(curr_len_anbw == 1) begin
                 dsci_queue.pop = 1;
             end
         end
@@ -657,6 +657,9 @@ always_ff @(posedge clk) begin
                  ds_offset,
                  //ds_offset_reg,
                  ds_last_word_len );
+    end
+    if(drs_out.valid && drs_out.ready && drs_out.data.last) begin
+        N = 0;
     end
 end
 
