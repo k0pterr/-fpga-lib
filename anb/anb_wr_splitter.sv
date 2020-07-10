@@ -415,10 +415,14 @@ always_comb begin
     //--------------------------------------------
     dfsmIDLE: begin
 
+        if( !dsci_queue.empty && drs_out.valid && curr_len_anbw == 1 ) begin
+            last  = 1;
+        end
+
         if( !dsci_queue.empty && drs_out.valid && ds_data_in.ready ) begin
-            valid = drs_out.valid;
+            valid = 1; //drs_out.valid;
             if( curr_len_anbw == 1 ) begin
-                last  = 1;
+            //    last  = 1;
                 ready = dsci_queue.head.seg ? 0 : ds_data_in.ready;
             end
             else begin
