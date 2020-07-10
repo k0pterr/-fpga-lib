@@ -34,14 +34,15 @@ module automatic anb_wr_splitter_m
 //
 //    Settings
 //
-localparam PAGE_SIZE  = 4096;                       // bytes
-localparam PCIE_DW_W  = 32;                         // bits
-localparam PCIE_BYTES = PCIE_DW_W/8;                // bytes
-localparam PAGE_DWC   = PAGE_SIZE/PCIE_BYTES;       // PCIe DWs
-localparam ANB_DWC    = $bits(DATA_T)/PCIE_DW_W;    // ANB data bus Double Word Count (PCIe DWs)
-localparam ANB_DWC_W  = clog2(ANB_DWC);             //
-localparam ANB_BC     = $bits(DATA_T)/8;            // ANB data bus byte count
-localparam ANB_BC_W   = clog2(ANB_BC);              //
+localparam PAGE_SIZE        = 4096;                       // bytes
+localparam PCIE_DW_W        = 32;                         // bits
+localparam PCIE_BYTES       = PCIE_DW_W/8;                // bytes
+localparam PCIE_BYTE_ADDR_W = clog2(PCIE_BYTES);          // 
+localparam PAGE_DWC         = PAGE_SIZE/PCIE_BYTES;       // PCIe DWs
+localparam ANB_DWC          = $bits(DATA_T)/PCIE_DW_W;    // ANB data bus Double Word Count (PCIe DWs)
+localparam ANB_DWC_W        = clog2(ANB_DWC);             //
+localparam ANB_BC           = $bits(DATA_T)/8;            // ANB data bus byte count
+localparam ANB_BC_W         = clog2(ANB_BC);              //
 //localparam ANB_WC     = 2**$bits(LEN_T)/ANB_BC;     // ANB data bus word count
 //localparam ANB_WC_W   = clog2(ANB_WC);              //
 
@@ -105,13 +106,15 @@ typedef logic [      clog2(PAGE_SIZE)-1:0] inpage_addr_t;
 typedef logic [       bits(PAGE_SIZE)-1:0] seg_len_t;
 typedef logic [       clog2(PAGE_DWC)-1:0] seg_len_dw_t;
 typedef logic [bits(PAGE_SIZE/ANB_BC)-1:0] seg_len_anbw_t;
+typedef logic [      PCIE_BYTE_ADDR_W-1:0] pcie_byte_addr_t;
 
 typedef struct packed
 {
-    logic     seg;
-    seg_len_t len;
-    anb_dwc_t last_word_len;
-    anb_dwc_t offset;
+    logic            seg;
+    seg_len_t        len;
+    anb_dwc_t        last_word_len;
+    anb_dwc_t        ds_offset;
+    pcie_byte_addr_t addr_offset;
 }
 ds_control_item_t;
 
@@ -288,7 +291,8 @@ always_comb begin
 //  ds_offset        = 0;
 //  ds_last_word_len = 'x;
 //  curr_len_anbw    = seg_len_anbw(ds_offset*PCIE_BYTES + curr_len);
-    dsci_queue.tail.offset        = 0;
+    dsci_queue.tail.addr_offset   = curr_addr[0 +: PCIE_BYTE_ADDR_W];
+    dsci_queue.tail.ds_offset     = 0;
     dsci_queue.tail.last_word_len = 'x;
     dsci_queue.tail.len           = curr_len;
     dsci_queue.tail.seg           = afsm_next == afsmSEG;
@@ -314,7 +318,7 @@ always_comb begin
         else begin
             curr_len = PAGE_SIZE;
         end
-        dsci_queue.tail.offset        = ds_offset_reg;
+        dsci_queue.tail.ds_offset     = ds_offset_reg;
         dsci_queue.tail.last_word_len = last_word_dw_len(curr_len);;
         dsci_queue.tail.len           = curr_len;
         dsci_queue.push               = aready;
@@ -384,9 +388,13 @@ end : dfsm_comb_b
 //--------------------------------------------------------------------
 
 always_comb begin
-    ds_offset        = dsci_queue.head.offset;
+    
+    automatic logic            seg         = dsci_queue.head.seg;
+    automatic pcie_byte_addr_t addr_offset = dsci_queue.head.addr_offset;
+    
+    ds_offset        = dsci_queue.head.ds_offset;
     ds_last_word_len = dsci_queue.head.last_word_len;
-    curr_len_anbw    = seg_len_anbw(ds_offset * PCIE_BYTES + dsci_queue.head.len);
+    curr_len_anbw    = seg_len_anbw((seg ? ds_offset * PCIE_BYTES : addr_offset) + dsci_queue.head.len);
 end
 
 always_comb begin
