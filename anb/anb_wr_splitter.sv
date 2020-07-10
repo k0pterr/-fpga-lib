@@ -282,7 +282,10 @@ end : afsm_comb_b
 
 always_comb begin
     
-    avalid           = 0;
+    automatic logic push = 0;
+    
+    
+    //avalid           = 0;
     aready           = s_a.aready && !dsci_queue.full;
 
     max_seg_len      = seg_len(ars_out.data.addr);
@@ -296,14 +299,14 @@ always_comb begin
     dsci_queue.tail.last_word_len = 'x;
     dsci_queue.tail.len           = curr_len;
     dsci_queue.tail.seg           = afsm_next == afsmSEG;
-    dsci_queue.push               = 0;
+    //dsci_queue.push               = 0;
     
     case(afsm)
     //--------------------------------------------
     afsmIDLE: begin
         //avalid = afsm_next == afsmSEG ? 1 : ars_out.valid;
         //avalid = ars_out.valid;
-        dsci_queue.push = ars_out.valid && aready;
+        push = ars_out.valid && aready;
     end
     //--------------------------------------------
     afsmSEG: begin
@@ -321,13 +324,15 @@ always_comb begin
         dsci_queue.tail.ds_offset     = ds_offset_reg;
         dsci_queue.tail.last_word_len = last_word_dw_len(curr_len);;
         dsci_queue.tail.len           = curr_len;
-        dsci_queue.push               = aready;
+        push                          = aready;
         
         //ds_last_word_len = last_word_dw_len(curr_len);
         //curr_len_anbw    = seg_len_anbw(ds_offset*PCIE_BYTES + curr_len);
     end
     //--------------------------------------------
     endcase
+    
+    dsci_queue.push = push;
 end
 
 always_ff @(posedge clk) begin
@@ -469,25 +474,28 @@ always_ff @(posedge clk) begin
 end
 
 always_comb begin
-    dsci_queue.pop = 0;
+    
+    automatic logic pop = 0;
+    
     case(dfsm)
     //--------------------------------------------
     dfsmIDLE: begin
         //if( dfsm_next == dfsmRUN ) begin
         if( !dsci_queue.empty && drs_out.valid  && ds_data_in.ready ) begin
             if(curr_len_anbw == 1) begin
-                dsci_queue.pop = 1;
+                pop = 1;
             end
         end
     end
     //--------------------------------------------
     dfsmRUN: begin
         if(ds_data_in.valid && ds_data_in.ready && curr_len_anbw_cnt == 1) begin
-            dsci_queue.pop = 1;
+            pop = 1;
         end
     end
     //--------------------------------------------
     endcase
+    dsci_queue.pop = pop;
 end
 
 
