@@ -202,138 +202,16 @@ function seg_len_anbw_t seg_len_anbw(input seg_len_t len);
 
 endfunction
 
-//------------------------------------------------
-//function offset_t offset(input dw_byte_addr_t addr,
-//                         input LEN_T          len);
-//endfunction
-//------------------------------------------------
-//task gen_seg(input ADDR_T addr, input LEN_T len);
-//
-//    ADDR_T    curr_addr       = addr;
-//    ADDR_T    next_addr;
-//    seg_len_t max_seg_len;
-//    seg_len_t curr_len;
-//    int       ds_offset       = 0;
-//    int       next_ds_offset;
-//    int       ds_len;
-//    int       N               = 0;
-//
-//    enum logic [1:0] { PATH, SEG } fsm = PATH;
-//
-//    $display("");
-//    $display("[%t], -------- Start processing ---------", $realtime);
-//
-//    forever begin
-//
-//        case(fsm)
-//        //----------------------------------------
-//        PATH: begin
-//            max_seg_len    = seg_len(curr_addr);
-//            ds_offset      = 0;
-//            next_ds_offset = ANB_DWC - seg_len_dw(curr_addr)%ANB_DWC;
-//            ds_len         = seg_len_dw(curr_addr);
-//            if(max_seg_len) begin
-//                if(max_seg_len < len) begin
-//                    curr_len = max_seg_len;
-//                    fsm      = SEG;
-//                end
-//                else begin
-//                    curr_len = len;
-//                end
-//            end
-//            else begin
-//                next_addr = curr_addr + PAGE_SIZE;
-//                len      -= PAGE_SIZE;
-//            end
-//
-//            next_addr  = curr_addr + curr_len;
-//            len       -= curr_len;
-//
-//
-//        end
-//        //----------------------------------------
-//        SEG: begin
-//            ds_offset   = next_ds_offset;
-//
-//            if(len > PAGE_SIZE) begin
-//                curr_len   = PAGE_SIZE;
-//                next_addr  = curr_addr + PAGE_SIZE;
-//                len       -= PAGE_SIZE;
-//            end
-//            else begin
-//                curr_len = len;
-//                len      = 0;
-//            end
-//
-//
-//        end
-//        //----------------------------------------
-//        endcase
-//
-//
-//        $display("[%t], Seg%1d, curr_addr: %x, max_seg_len: %5d, curr_len: %5d, ds_offset: %1d, ds_len: %4d, next_addr: %x, next_ds_offset: %1d, len: %5d",
-//                 $realtime,
-//                 N++,
-//                 curr_addr,
-//                 max_seg_len,
-//                 curr_len,
-//                 ds_offset,
-//                 ds_len,
-//                 next_addr,
-//                 next_ds_offset,
-//                 len);
-//
-//        curr_addr = next_addr;
-//
-//        if(!len) begin
-//            $display("[%t], -------- End processing ---------\n ", $realtime, );
-//            break;
-//        end
-//    end
-//
-//endtask
-
-//------------------------------------------------
-
-//initial begin
-//
-//    $display("[%t], seg_len(64'hfffa_e000): %4d", $realtime, seg_len(64'hfffa_e000));
-//    $display("[%t], seg_len(64'hfffa_1001): %4d", $realtime, seg_len(64'hfffa_1001));
-//    $display("[%t], seg_len(64'hfffa_1ffa): %4d", $realtime, seg_len(64'hfffa_1ffa));
-//    $display("[%t], seg_len(64'hfffa_1ff2): %4d", $realtime, seg_len(64'hfffa_1ff2));
-//    $display("[%t], seg_len(64'hfffa_1ff4): %4d", $realtime, seg_len(64'hfffa_1ff4));
-//    $display("[%t], seg_len(64'hfffa_100f): %4d", $realtime, seg_len(64'hfffa_100f));
-//    $display("");
-//    $display("[%t], seg_len_dw(64'hfffa_e000): %4d", $realtime, seg_len_dw(64'hfffa_e000));
-//    $display("[%t], seg_len_dw(64'hfffa_1001): %4d", $realtime, seg_len_dw(64'hfffa_1001));
-//    $display("[%t], seg_len_dw(64'hfffa_1ffa): %4d", $realtime, seg_len_dw(64'hfffa_1ffa));
-//    $display("[%t], seg_len_dw(64'hfffa_1ff2): %4d", $realtime, seg_len_dw(64'hfffa_1ff2));
-//    $display("[%t], seg_len_dw(64'hfffa_1ff4): %4d", $realtime, seg_len_dw(64'hfffa_1ff4));
-//    $display("[%t], seg_len_dw(64'hfffa_100f): %4d", $realtime, seg_len_dw(64'hfffa_100f));
-//
-////  gen_seg(64'hfffa_1ffa, 16);
-////  gen_seg(64'hfffa_1ffa, 16+4096);
-////  gen_seg(64'hfffa_1ffc, 5000);
-////
-////  $stop(2);
-//
-//end
 //------------------------------------------------------------------------------
 //
 //    Logic
 //
-
 always_comb begin
     
     ars_in.valid     = m_a.avalid;
     m_a.aready       = ars_in.ready;
     ars_in.data.addr = m_a.addr;
     ars_in.data.len  = m_a.len;
-
-//  s_a.avalid       = ars_out.valid;
-//  ars_out.ready    = s_a.aready;
-//  s_a.addr         = ars_out.data.addr;
-//  s_a.len          = ars_out.data.len;
 
     //s_a.avalid       = avalid;
     s_a.avalid       = dsci_queue.push;
@@ -350,49 +228,12 @@ always_comb begin
     drs_in.data.data = m_d.data;
     drs_in.data.last = m_d.last;
 
-//  s_d.valid        = drs_out.valid;
-//  drs_out.ready    = s_d.ready;
-//  s_d.data         = drs_out.data.data;
-//  s_d.last         = drs_out.data.last;
-
-//  ds_data_in.valid    = drs_out.valid;
-//  drs_out.ready       = ds_data_in.ready;
-//  ds_data_in.data     = drs_out.data.data;
-//  ds_data_in.last     = drs_out.data.last;
-
     s_d.valid         = ds_data_out.valid;
     ds_data_out.ready = s_d.ready;
     s_d.data          = ds_data_out.data;
     s_d.last          = ds_data_out.last;
 
 end
-
-//always_comb begin
-//
-//    cb_dready = 0;
-//
-//    case(afsm)
-//    //--------------------------------------------
-//    afsmIDLE: begin
-//        cb_dready = ds_data_in.ready;
-//        if(afsm_next == afsmIDLE) begin
-//        end
-//    end
-//    //--------------------------------------------
-//    afsmSEG: begin
-//        cb_dready = ds_data_in.ready;
-//        if(drs_out.data.last) begin
-//            if(afsm_next == afsmSEG) begin
-//                cb_dready = 0;
-//            end
-//        end
-//    end
-//    //--------------------------------------------
-//    endcase
-//
-//    cb_dvalid = cb_dready;
-//
-//end
 
 //--------------------------------------------------------------------
 //
