@@ -1,7 +1,10 @@
 //------------------------------------------------------------------------------
 //
+//     Project:     Any
 //
+//     Description: ANB Write Transaction 4k Memory Page Boundary Splitter. 
 //
+//     Version: 1.0
 //
 //------------------------------------------------------------------------------
 
@@ -20,14 +23,14 @@ module automatic anb_wr_splitter_m
     parameter type DATA_T = logic [127:0]
 )
 (
-    input  logic   clk,
-    input  logic   rst,
+    input  logic           clk,
+    input  logic           rst,
 
-    anb_addr_channel_if.s    m_a,
-    anb_addr_channel_if.m    s_a,
+    anb_addr_channel_if.s  m_a,
+    anb_addr_channel_if.m  s_a,
 
-    anb_data_channel_if.s    m_d,
-    anb_data_channel_if.m    s_d
+    anb_data_channel_if.s  m_d,
+    anb_data_channel_if.m  s_d
 );
 
 //------------------------------------------------------------------------------
@@ -43,9 +46,6 @@ localparam ANB_DWC          = $bits(DATA_T)/PCIE_DW_W;    // ANB data bus Double
 localparam ANB_DWC_W        = clog2(ANB_DWC);             //
 localparam ANB_BC           = $bits(DATA_T)/8;            // ANB data bus byte count
 localparam ANB_BC_W         = clog2(ANB_BC);              //
-//localparam ANB_WC     = 2**$bits(LEN_T)/ANB_BC;     // ANB data bus word count
-//localparam ANB_WC_W   = clog2(ANB_WC);              //
-
 
 //------------------------------------------------------------------------------
 //
@@ -81,10 +81,9 @@ typedef struct
 }
 data_ch_t;
 
-typedef enum logic [1:0]
+typedef enum logic [0:0]
 {
     afsmIDLE,
-   // afsmWAIT_DATA,
     afsmSEG
 }
 address_channel_fsm_t;
@@ -96,12 +95,8 @@ typedef enum logic [0:0]
 }
 data_channel_fsm_t;
 
-
-//typedef logic [clog2(PCIE_BYTES)-1:0] dw_byte_addr_t;
-typedef logic [ANB_DWC_W-1:0] anb_dwc_t;
-typedef logic [ ANB_BC_W-1:0] anb_bc_t;
-//typedef logic [ ANB_WC_W-1:0] anb_wc_t;
-
+typedef logic [             ANB_DWC_W-1:0] anb_dwc_t;
+typedef logic [              ANB_BC_W-1:0] anb_bc_t;
 typedef logic [      clog2(PAGE_SIZE)-1:0] inpage_addr_t;
 typedef logic [       bits(PAGE_SIZE)-1:0] seg_len_t;
 typedef logic [       clog2(PAGE_DWC)-1:0] seg_len_dw_t;
@@ -140,37 +135,35 @@ dsci_queue_t;
 //
 //    Objects
 //
-(* mark_debug = "true" *) addr_ch_t             ars_in;                // Address (channel) Register Slice Input
-(* mark_debug = "true" *) addr_ch_t             ars_out;               // Address (channel) Register Slice Output
-(* mark_debug = "true" *)                                              
-(* mark_debug = "true" *) data_ch_t             drs_in;                // Data (channel) Register Slice Input
-(* mark_debug = "true" *) data_ch_t             drs_out;               // Data (channel) Register Slice Output
-                                                                       
-(* mark_debug = "true" *) address_channel_fsm_t afsm = afsmIDLE;       
-(* mark_debug = "true" *) address_channel_fsm_t afsm_next;             
-(* mark_debug = "true" *) address_channel_fsm_t afsm_next1;            
-                                                                       
-(* mark_debug = "true" *) data_channel_fsm_t    dfsm = dfsmIDLE;       
-(* mark_debug = "true" *) data_channel_fsm_t    dfsm_next;             
-                                                                       
-(* mark_debug = "true" *) ADDR_T                curr_addr;             
-(* mark_debug = "true" *) ADDR_T                curr_addr_reg;         
-(* mark_debug = "true" *) LEN_T                 rlen;                  // residual length
-(* mark_debug = "true" *) seg_len_t             max_seg_len;
-(* mark_debug = "true" *) seg_len_t             curr_len;
-//(* mark_debug = "true" *) seg_len_t             curr_len_reg;
-(* mark_debug = "true" *) seg_len_anbw_t        curr_len_anbw;         // ANB  word count send to data shifter
-(* mark_debug = "true" *) seg_len_anbw_t        curr_len_anbw_cnt = 0;
-(* mark_debug = "true" *) anb_dwc_t             ds_offset;             // 'ds' means 'data shifter'
-(* mark_debug = "true" *) anb_dwc_t             ds_offset_reg;         // 'ds' means 'data shifter'
-(* mark_debug = "true" *) anb_dwc_t             ds_last_word_len;      // 'ds' means 'data shifter'
+addr_ch_t              ars_in;                // Address (channel) Register Slice Input
+addr_ch_t              ars_out;               // Address (channel) Register Slice Output
+                                              
+data_ch_t              drs_in;                // Data (channel) Register Slice Input
+data_ch_t              drs_out;               // Data (channel) Register Slice Output
+                                              
+address_channel_fsm_t  afsm = afsmIDLE;       
+address_channel_fsm_t  afsm_next;             
+address_channel_fsm_t  afsm_next1;            
+                                              
+data_channel_fsm_t     dfsm = dfsmIDLE;       
+data_channel_fsm_t     dfsm_next;             
+                                              
+ADDR_T                 curr_addr;             
+ADDR_T                 curr_addr_reg;         
+logic                  seg_tail_flag_reg = 0;
+LEN_T                  rlen;                  // residual length
+seg_len_t              max_seg_len;
+seg_len_t              curr_len;
+seg_len_t              curr_len_reg;
+seg_len_anbw_t         curr_len_anbw;         // ANB  word count send to data shifter
+seg_len_anbw_t         curr_len_anbw_cnt = 0;
+anb_dwc_t              ds_offset;             // 'ds' means 'data shifter'
+anb_dwc_t              ds_offset_reg;         // 'ds' means 'data shifter'
+anb_dwc_t              ds_last_word_len;      // 'ds' means 'data shifter'
+logic                  aready;
+dsci_queue_t           dsci_queue;
 
-(* mark_debug = "true" *) logic                 avalid = 0;
-(* mark_debug = "true" *) logic                 aready;
-
-dsci_queue_t dsci_queue;
-
-(* mark_debug = "true" *) anb_data_channel_if #( .DATA_T( DATA_T) ) ds_data_in();
+anb_data_channel_if #( .DATA_T( DATA_T) ) ds_data_in();
 anb_data_channel_if #( .DATA_T( DATA_T) ) ds_data_out();
 
 assign afsm_next1 = afsm_next;
@@ -194,10 +187,6 @@ endfunction
 //------------------------------------------------
 function seg_len_dw_t seg_len_dw(input inpage_addr_t addr);
 
-//  if($realtime > 240 && $realtime < 280) begin
-//      $display("[%t], addr: %x, dwc: %d", $realtime, addr, ( PAGE_SIZE - (addr & ~2'b11) ));
-//  end
-    
     return ( PAGE_SIZE - (addr & ~2'b11) )/PCIE_BYTES;
 
 endfunction
@@ -219,32 +208,27 @@ endfunction
 //    Logic
 //
 always_comb begin
-    
     ars_in.valid     = m_a.avalid;
     m_a.aready       = ars_in.ready;
     ars_in.data.addr = m_a.addr;
     ars_in.data.len  = m_a.len;
 
-    //s_a.avalid       = avalid;
     s_a.avalid       = dsci_queue.push;
-    //ars_out.ready    = afsm == afsmIDLE;
     ars_out.ready    = aready;
     s_a.addr         = curr_addr;
     s_a.len          = curr_len;
 end
 
 always_comb begin
-    
-    drs_in.valid     = m_d.valid;
-    m_d.ready        = drs_in.ready;
-    drs_in.data.data = m_d.data;
-    drs_in.data.last = m_d.last;
+    drs_in.valid      = m_d.valid;
+    m_d.ready         = drs_in.ready;
+    drs_in.data.data  = m_d.data;
+    drs_in.data.last  = m_d.last;
 
     s_d.valid         = ds_data_out.valid;
     ds_data_out.ready = s_d.ready;
     s_d.data          = ds_data_out.data;
     s_d.last          = ds_data_out.last;
-
 end
 
 //--------------------------------------------------------------------
@@ -265,7 +249,6 @@ always_comb begin : afsm_comb_b
     //--------------------------------------------
     afsmIDLE: begin
         if(ars_out.valid && aready) begin
-            //if(ars_out.data.len > ANB_BC || ars_out.data.len > max_seg_len ) begin
             if(ars_out.data.len > max_seg_len ) begin
                 next = afsmSEG;
             end
@@ -274,7 +257,6 @@ always_comb begin : afsm_comb_b
     //--------------------------------------------
     afsmSEG: begin : afsmSEG_b
         if(!dsci_queue.full && rlen) begin
-            //if(rlen == curr_len) begin
             if(rlen <= PAGE_SIZE) begin
                 next = afsmIDLE;
             end
@@ -287,22 +269,15 @@ always_comb begin : afsm_comb_b
 
 end : afsm_comb_b
 //--------------------------------------------------------------------
-
-
 always_comb begin
     
     automatic logic push = 0;
     
-    
-    //avalid           = 0;
-    aready           = s_a.aready && !dsci_queue.full && afsm == afsmIDLE;
+    aready                        = s_a.aready && !dsci_queue.full && afsm == afsmIDLE;
+    max_seg_len                   = seg_len(ars_out.data.addr);
+    curr_addr                     = ars_out.data.addr;
+    curr_len                      = afsm_next == afsmSEG ? min(ars_out.data.len, max_seg_len) : ars_out.data.len;
 
-    max_seg_len      = seg_len(ars_out.data.addr);
-    curr_addr        = ars_out.data.addr;
-    curr_len         = afsm_next == afsmSEG ? min(ars_out.data.len, max_seg_len) : ars_out.data.len;
-//  ds_offset        = 0;
-//  ds_last_word_len = 'x;
-//  curr_len_anbw    = seg_len_anbw(ds_offset*PCIE_BYTES + curr_len);
     dsci_queue.tail.addr_offset   = curr_addr[0 +: PCIE_BYTE_ADDR_W];
     dsci_queue.tail.ds_offset     = 0;
     dsci_queue.tail.last_word_len = 'x;
@@ -310,24 +285,18 @@ always_comb begin
     dsci_queue.tail.seg           = afsm_next == afsmSEG;
     dsci_queue.tail.seg_tail_flag = afsm_next == afsmSEG && curr_addr[0 +: ANB_BC_W] >= PCIE_BYTES;
 `ifdef SIMULATOR
-    dsci_queue.tail.addr     = curr_addr;
-    dsci_queue.tail.task_len = curr_len;
+    dsci_queue.tail.addr          = curr_addr;
+    dsci_queue.tail.task_len      = curr_len;
 `endif
     
     case(afsm)
     //--------------------------------------------
     afsmIDLE: begin
-        //avalid = afsm_next == afsmSEG ? 1 : ars_out.valid;
-        //avalid = ars_out.valid;
-        push = ars_out.valid && s_a.aready && !dsci_queue.full; //aready;
+        push = ars_out.valid && s_a.aready && !dsci_queue.full;
     end
     //--------------------------------------------
     afsmSEG: begin
-        //avalid = dfsm == dfsmIDLE;
-        
         curr_addr = curr_addr_reg;
-        //ds_offset = avalid ? ds_offset_reg : 0;
-        //ds_offset = ds_offset_reg;
         if(rlen < PAGE_SIZE) begin
             curr_len = rlen;
         end
@@ -336,16 +305,14 @@ always_comb begin
         end
         dsci_queue.tail.addr_offset   = 0;
         dsci_queue.tail.ds_offset     = ds_offset_reg;
-        dsci_queue.tail.last_word_len = last_word_dw_len(curr_len);;
+        dsci_queue.tail.last_word_len = last_word_dw_len(curr_len);
         dsci_queue.tail.len           = curr_len;
+        dsci_queue.tail.seg_tail_flag = afsm_next == afsmSEG ? seg_tail_flag_reg : 0;
     `ifdef SIMULATOR
-        dsci_queue.tail.addr     = curr_addr;
-        dsci_queue.tail.task_len = curr_len;
+        dsci_queue.tail.addr          = curr_addr;
+        dsci_queue.tail.task_len      = curr_len;
     `endif
         push                          = s_a.aready && !dsci_queue.full; // aready;
-        
-        //ds_last_word_len = last_word_dw_len(curr_len);
-        //curr_len_anbw    = seg_len_anbw(ds_offset*PCIE_BYTES + curr_len);
     end
     //--------------------------------------------
     endcase
@@ -354,13 +321,13 @@ always_comb begin
 end
 
 always_ff @(posedge clk) begin
-    //curr_len_reg <= curr_len;
     case(afsm)
     //--------------------------------------------
     afsmIDLE: begin
-        curr_addr_reg <= ars_out.data.addr + curr_len;
-        rlen          <= ars_out.data.len - curr_len;
-        ds_offset_reg <= seg_len_dw(ars_out.data.addr)%ANB_DWC;
+        curr_addr_reg     <= ars_out.data.addr + curr_len;
+        rlen              <= ars_out.data.len - curr_len;
+        ds_offset_reg     <= seg_len_dw(ars_out.data.addr)%ANB_DWC;
+        seg_tail_flag_reg <= afsm_next == afsmSEG && curr_addr[0 +: ANB_BC_W] >= PCIE_BYTES;
     end
     //--------------------------------------------
     afsmSEG: begin
@@ -418,7 +385,7 @@ always_comb begin
     ds_last_word_len = dsci_queue.head.last_word_len;
     
     if(dsci_queue.head.seg) begin
-        curr_len_anbw = seg_len_anbw((seg_tail_flag ? addr_offset : ds_offset * PCIE_BYTES) + dsci_queue.head.len);
+        curr_len_anbw = seg_len_anbw((seg_tail_flag ? addr_offset + ds_offset * PCIE_BYTES: ds_offset * PCIE_BYTES) + dsci_queue.head.len);
     end else
     begin
         curr_len_anbw = seg_len_anbw(addr_offset + ds_offset * PCIE_BYTES + dsci_queue.head.len);
@@ -431,13 +398,11 @@ always_comb begin
     automatic logic last  = 0;
     automatic logic ready = 0;
     
-    //ready            = ds_data_in.ready;
     ds_data_in.data  = drs_out.data.data;
     
     case(dfsm)
     //--------------------------------------------
     dfsmIDLE: begin
-
         if( !dsci_queue.empty && drs_out.valid && curr_len_anbw == 1 ) begin
             last  = 1;
         end
@@ -451,7 +416,6 @@ always_comb begin
                 ready = ds_data_in.ready;
             end
         end
-        
     end
     //--------------------------------------------
     dfsmRUN: begin
@@ -461,7 +425,6 @@ always_comb begin
         if(valid ) begin
             if(curr_len_anbw_cnt == 1) begin
                 last  = 1;
-                //ready = dsci_queue.head.seg ? 0 : ds_data_in.ready; // ??? <- && dsci_queue.head.addr_offset
                 ready = dsci_queue.head.seg_tail_flag ? 0 : ds_data_in.ready;
             end
         end
@@ -480,8 +443,6 @@ always_ff @(posedge clk) begin
     //--------------------------------------------
     dfsmIDLE: begin
         curr_len_anbw_cnt <= curr_len_anbw - 1;
-//      if( dfsm_next == dfsmRUN ) begin
-//      end
     end
     //--------------------------------------------
     dfsmRUN: begin
@@ -500,7 +461,6 @@ always_comb begin
     case(dfsm)
     //--------------------------------------------
     dfsmIDLE: begin
-        //if( dfsm_next == dfsmRUN ) begin
         if( !dsci_queue.empty && drs_out.valid  && ds_data_in.ready ) begin
             if(curr_len_anbw == 1) begin
                 pop = 1;
@@ -518,7 +478,7 @@ always_comb begin
     dsci_queue.pop = pop;
 end
 
-
+`ifdef SIMULATOR
 int N = 0;
 always_ff @(posedge clk) begin
     if(dsci_queue.push) begin
@@ -532,16 +492,13 @@ always_ff @(posedge clk) begin
                  curr_len_anbw,
                  afsm == afsmIDLE ? ars_out.data.len - curr_len : rlen < PAGE_SIZE ? rlen - curr_len : rlen - PAGE_SIZE,
                  ds_offset,
-                 //ds_offset_reg,
                  ds_last_word_len );
     end
-    //if(drs_out.valid && drs_out.ready && drs_out.data.last) begin
     if(afsm == afsmSEG && afsm_next == afsmIDLE) begin
         N = 0;
     end
 end
-
-
+`endif
 
 //------------------------------------------------------------------------------
 //
