@@ -494,7 +494,7 @@ always_ff @(posedge clk) begin
                  ds_offset,
                  ds_last_word_len );
     end
-    if(afsm == afsmSEG && afsm_next == afsmIDLE) begin
+    if(afsm_next == afsmIDLE) begin
         N = 0;
     end
 end
