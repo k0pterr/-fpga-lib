@@ -81,6 +81,19 @@ typedef struct
 }
 data_ch_t;
 
+//typedef struct
+//{
+//    ddata_t  tail;
+//    ddata_t  head;
+//    logic    push;
+//    logic    pop;
+//    logic    full;
+//    logic    empty;
+//    logic    wr_rst_busy;
+//    logic    rd_rst_busy;
+//}
+//drs_t;
+
 typedef enum logic [0:0]
 {
     afsmIDLE,
@@ -140,6 +153,9 @@ addr_ch_t              ars_out;               // Address (channel) Register Slic
                                               
 data_ch_t              drs_in;                // Data (channel) Register Slice Input
 data_ch_t              drs_out;               // Data (channel) Register Slice Output
+
+//drs_t                  drs;
+
                                               
 address_channel_fsm_t  afsm = afsmIDLE;       
 address_channel_fsm_t  afsm_next;             
@@ -521,7 +537,7 @@ addr_ch_reg_slice
 );
 //------------------------------------------------------------------------------
 (* keep_hierarchy="yes" *)
-reg_stage_m
+reg_stage2_m
 #(
     .DATA_T ( ddata_t )
 )
@@ -535,6 +551,35 @@ data_ch_reg_slice
     .ready_dst ( drs_out.ready ),
     .dst       ( drs_out.data  )
 );
+//------------------------------------------------------------------------------
+//fifo_sc_m
+//#(
+//    .DATA_ITEM_TYPE ( ddata_t ),
+//    .DEPTH          ( 32                ),
+//    .MEMTYPE        ( "distributed"     )
+//)
+//reg_slice
+//(
+//    .clk         ( clk             ),
+//    .rst         ( rst             ),
+//    .tail        ( drs.tail        ),
+//    .head        ( drs.head        ),
+//    .push        ( drs.push        ),
+//    .pop         ( drs.pop         ),
+//    .full        ( drs.full        ),
+//    .empty       ( drs.empty       ),
+//    .wr_rst_busy ( drs.wr_rst_busy ),
+//    .rd_rst_busy ( drs.rd_rst_busy )
+//);
+//
+//assign drs.tail      = drs_in.data;
+//assign drs.push      = drs_in.valid && !drs.full;
+//assign drs_in.ready  = !drs.full;
+//
+//assign drs_out.data  = drs.head;
+//assign drs_out.valid = !drs.empty;
+//assign drs.pop       = drs_out.ready && !drs.empty;
+
 //------------------------------------------------------------------------------
 fifo_sc_m
 #(
