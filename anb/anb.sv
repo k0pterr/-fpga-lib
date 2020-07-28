@@ -16,8 +16,8 @@
 //
 interface anb_addr_channel_if
 #(
-    parameter type ADDR_T = logic,
-    parameter type LEN_T  = logic
+    parameter type ADDR_T = logic [63:0],
+    parameter type LEN_T  = logic [13:0]
 );
 
 ADDR_T   addr;    
@@ -50,7 +50,7 @@ endinterface : anb_addr_channel_if
 //
 interface anb_data_channel_if
 #(
-    parameter type DATA_T = logic
+    parameter type DATA_T = logic [127:0]
 );
 
 DATA_T  data;   
@@ -81,9 +81,9 @@ endinterface : anb_data_channel_if
 //
 interface anb_wr_if
 #(
-    parameter type ADDR_T = logic,
-    parameter type LEN_T  = logic,
-    parameter type DATA_T = logic
+    parameter type ADDR_T = logic [63:0],
+    parameter type LEN_T  = logic [13:0],
+    parameter type DATA_T = logic [127:0]
 );
     
 ADDR_T   addr;    
@@ -130,9 +130,9 @@ endinterface : anb_wr_if
 //
 interface anb_rd_if
 #(
-    parameter type ADDR_T = logic,
-    parameter type LEN_T  = logic,
-    parameter type DATA_T = logic
+    parameter type ADDR_T = logic [63:0],
+    parameter type LEN_T  = logic [13:0],
+    parameter type DATA_T = logic [127:0]
 );
 
 ADDR_T  addr;
@@ -179,9 +179,9 @@ endinterface : anb_rd_if
 interface smc_rd_if
 #(
     parameter N = 1,
-    parameter type ADDR_T = logic,
-    parameter type LEN_T  = logic,
-    parameter type DATA_T = logic
+    parameter type ADDR_T = logic [63:0],
+    parameter type LEN_T  = logic [13:0],
+    parameter type DATA_T = logic [127:0]
 );
 
 typedef logic [       clog2(N)-1:0] rd_id_t;
