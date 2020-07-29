@@ -272,7 +272,7 @@ always_comb begin : afsm_comb_b
     end
     //--------------------------------------------
     afsmSEG: begin : afsmSEG_b
-        if(!dsci_queue.full && rlen) begin
+        if(!dsci_queue.full && rlen && s_a.aready) begin
             if(rlen <= PAGE_SIZE) begin
                 next = afsmIDLE;
             end
